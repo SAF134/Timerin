@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "123456789000",
-    "project_id": "timerin-dev",
-    "storage_bucket": "timerin-dev.appspot.com"
+    "project_number": "676358060323",
+    "project_id": "timerin-2bc02",
+    "storage_bucket": "timerin-2bc02.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789000:android:0123456789abcdef",
+        "mobilesdk_app_id": "1:676358060323:android:dfe695a23dd81a49f37496",
         "android_client_info": {
           "package_name": "com.timerin.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "676358060323-5dlvlj4i8o7kph14h9foikth4lt1hfqn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.timerin.app",
+            "certificate_hash": "29fc453bfe67dfdbe657e9b98b6ca0a0de20d9e7"
+          }
+        },
+        {
+          "client_id": "676358060323-ngocp157nbdpd33783caqffee0kncp64.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDummyDevKeyForTimerinInitialSetup"
+          "current_key": "AIzaSyB-BEYZXHHXeOeWkJpOopT3LGszGBW9eG8"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "676358060323-ngocp157nbdpd33783caqffee0kncp64.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

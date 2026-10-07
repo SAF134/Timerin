@@ -38,7 +38,7 @@
 | T-014 | Uji perangkat (≥ 3 merek), tips baterai, optimasi CPU/RAM (Selesai) | NFR-002, 003 | PRD §5 | target NFR tercapai |
 | T-015 | Review keamanan & checklist Play Protect (Selesai) | NFR-005 | SECURITY | semua checklist tercentang |
 | T-016 | Kebijakan Privasi, aset rilis, signing, build APK, unggah ke Drive + SHA-256 (Selesai) | n/a | SECURITY §3,5 | APK terpasang dari Drive & lolos uji pemasangan |
-| T-017 | **Mulai sekarang:** daftar akun *limited distribution* (gratis), daftarkan package name + SHA-256 keystore rilis; upgrade ke akun penuh sebelum melebihi 20 perangkat | NFR-005 | SECURITY §3 | regulasi 30 Sep 2026 aktif; package name terdaftar; perangkat beta ≤ 20 |
+| T-017 | Daftar akun *limited distribution* (gratis), daftarkan package name + SHA-256 keystore rilis (Selesai) | NFR-005 | SECURITY §3 | regulasi 30 Sep 2026 aktif; package name terdaftar; perangkat beta ≤ 20 |
 | T-018 | Cek versi baru (`config/app`) (Selesai) | FR-020 | TECH §4,6 | ajakan update muncul bila versi terpasang lebih lama (bisa dicek sebelum login) |
 
 Dependensi: T-001 → T-002/T-003 → T-004 → T-006 → T-005 → T-007 → T-009 → T-008; T-010 setelah T-009; T-011 setelah T-009; T-012 setelah T-005; T-013 setelah T-009; T-018 sebelum T-016; T-017 dikerjakan paralel oleh developer; T-014/015/016 terakhir. T-002 dan T-003 bisa paralel.
