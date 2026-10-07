@@ -9,6 +9,25 @@ final overlayServiceControllerProvider = Provider<OverlayServiceController>((
   return OverlayServiceController(permissionService: permissionService);
 });
 
+/// Notifier status aktifnya overlay di layar.
+class OverlayActiveNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setActive(bool active) {
+    state = active;
+  }
+
+  Future<void> syncWithSystem() async {
+    final controller = ref.read(overlayServiceControllerProvider);
+    state = await controller.isOverlayActive();
+  }
+}
+
+final overlayActiveProvider = NotifierProvider<OverlayActiveNotifier, bool>(() {
+  return OverlayActiveNotifier();
+});
+
 class OverlayServiceController {
   OverlayServiceController({
     required OverlayPermissionService permissionService,
@@ -24,8 +43,8 @@ class OverlayServiceController {
   /// Memulai layanan overlay mengambang beserta notifikasi persisten (FR-010, FR-019).
   /// Mengembalikan `true` jika berhasil diluncurkan, `false` jika izin belum diberikan.
   Future<bool> startOverlay({
-    int height = WindowSize.matchParent,
-    int width = WindowSize.matchParent,
+    int height = 220,
+    int width = 220,
     OverlayAlignment alignment = OverlayAlignment.centerLeft,
     bool enableDrag = true,
   }) async {
