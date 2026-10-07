@@ -8,7 +8,7 @@ import 'package:timerin/data/repositories/timer_settings_repository.dart';
 import 'package:timerin/features/overlay/presentation/overlay_timer_bubble.dart';
 
 /// Kontainer multi-timer overlay yang mendukung 1–5 timer, orientasi vertikal/horizontal,
-/// skala ukuran 50%–150%, dan durasi per timer independen (FR-005 s.d. FR-010, SCR-007).
+/// skala ukuran 50%–150%, durasi per timer independen, dan perpindahan posisi (FR-005..FR-011, SCR-007).
 class OverlayContainer extends StatefulWidget {
   const OverlayContainer({super.key, this.settings, this.isInteractive = true});
 
@@ -25,6 +25,8 @@ class OverlayContainer extends StatefulWidget {
 class _OverlayContainerState extends State<OverlayContainer> {
   late TimerSettings _settings;
   StreamSubscription<dynamic>? _overlaySubscription;
+  Timer? _positionCheckTimer;
+  OverlayPosition? _lastSavedPosition;
 
   @override
   void initState() {
@@ -33,6 +35,7 @@ class _OverlayContainerState extends State<OverlayContainer> {
 
     if (widget.settings == null) {
       _loadLocalSettingsAndListen();
+      _startPositionTracking();
     }
   }
 
@@ -73,8 +76,28 @@ class _OverlayContainerState extends State<OverlayContainer> {
     }
   }
 
+  /// Memantau perubahan posisi overlay saat digeser pengguna di layar dan menyimpannya (FR-011).
+  void _startPositionTracking() {
+    _positionCheckTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+      try {
+        final pos = await FlutterOverlayWindow.getOverlayPosition();
+        if (_lastSavedPosition == null ||
+            (pos.x - _lastSavedPosition!.x).abs() > 2 ||
+            (pos.y - _lastSavedPosition!.y).abs() > 2) {
+          _lastSavedPosition = pos;
+          final prefs = await SharedPreferences.getInstance();
+          final repo = TimerSettingsRepository(prefs: prefs);
+          await repo.savePosition(pos.x, pos.y);
+        }
+      } catch (_) {
+        // Abaikan jika method channel overlay belum aktif / lingkungan test
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _positionCheckTimer?.cancel();
     _overlaySubscription?.cancel();
     super.dispose();
   }

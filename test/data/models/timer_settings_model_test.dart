@@ -91,5 +91,28 @@ void main() {
       expect(TimerDurationPresets.formatDurationLabel(240), '4 mnt');
       expect(TimerDurationPresets.formatDurationLabel(45), '45 dtk');
     });
+
+    test('position coordinates serialize and copyWith accurately (FR-011)', () {
+      const settings = TimerSettings();
+      expect(settings.positionX, isNull);
+      expect(settings.positionY, isNull);
+      expect(settings.hasCustomPosition, isFalse);
+
+      final withPos = settings.copyWith(positionX: 120.0, positionY: 340.0);
+      expect(withPos.positionX, 120.0);
+      expect(withPos.positionY, 340.0);
+      expect(withPos.hasCustomPosition, isTrue);
+
+      final jsonStr = withPos.toJson();
+      final restored = TimerSettings.fromJson(jsonStr);
+      expect(restored.positionX, 120.0);
+      expect(restored.positionY, 340.0);
+      expect(restored.hasCustomPosition, isTrue);
+
+      final reset = withPos.copyWith(clearPosition: true);
+      expect(reset.positionX, isNull);
+      expect(reset.positionY, isNull);
+      expect(reset.hasCustomPosition, isFalse);
+    });
   });
 }

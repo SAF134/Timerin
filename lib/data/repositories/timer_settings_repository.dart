@@ -16,7 +16,7 @@ final timerSettingsProvider =
       return TimerSettingsNotifier();
     });
 
-/// Notifier pengelola state pengaturan timer lokal secara reaktif (FR-018).
+/// Notifier pengelola state pengaturan timer lokal secara reaktif (FR-011, FR-018).
 class TimerSettingsNotifier extends Notifier<TimerSettings> {
   @override
   TimerSettings build() {
@@ -59,6 +59,16 @@ class TimerSettingsNotifier extends Notifier<TimerSettings> {
     await updateSettings(state.copyWithDuration(index, seconds));
   }
 
+  /// Memperbarui koordinat posisi overlay yang digeser (FR-011, SCR-007).
+  Future<void> setPosition(double x, double y) async {
+    await updateSettings(state.copyWith(positionX: x, positionY: y));
+  }
+
+  /// Mereset koordinat posisi overlay ke posisi default kiri-tengah (FR-011, SCR-007).
+  Future<void> resetPosition() async {
+    await updateSettings(state.copyWith(clearPosition: true));
+  }
+
   /// Sinkronisasi pengaturan ke jendela overlay jika sedang aktif.
   void _syncToRunningOverlay(TimerSettings settings) {
     try {
@@ -69,7 +79,7 @@ class TimerSettingsNotifier extends Notifier<TimerSettings> {
   }
 }
 
-/// Repositori penyimpanan lokal pengaturan timer overlay (FR-018, TECH §2).
+/// Repositori penyimpanan lokal pengaturan timer overlay (FR-011, FR-018, TECH §2).
 class TimerSettingsRepository {
   TimerSettingsRepository({required SharedPreferences prefs}) : _prefs = prefs;
 
@@ -89,5 +99,19 @@ class TimerSettingsRepository {
   /// Menyimpan konfigurasi pengaturan timer ke penyimpanan lokal.
   Future<bool> saveSettings(TimerSettings settings) async {
     return _prefs.setString(_keySettings, settings.toJson());
+  }
+
+  /// Menyimpan koordinat posisi overlay terbaru ke penyimpanan lokal (FR-011).
+  Future<bool> savePosition(double x, double y) async {
+    final current = getSettings();
+    final updated = current.copyWith(positionX: x, positionY: y);
+    return saveSettings(updated);
+  }
+
+  /// Mereset koordinat posisi overlay ke bawaan (FR-011).
+  Future<bool> resetPosition() async {
+    final current = getSettings();
+    final updated = current.copyWith(clearPosition: true);
+    return saveSettings(updated);
   }
 }

@@ -413,6 +413,57 @@ class TimerSettingsCard extends ConsumerWidget {
               ),
             ),
           ),
+          AppSpacing.gapH24,
+
+          // 7. Posisi Overlay (FR-011, SCR-007)
+          Row(
+            children: <Widget>[
+              const Icon(
+                Icons.open_with_rounded,
+                size: 20.0,
+                color: AppColors.textMuted,
+              ),
+              AppSpacing.gapW8,
+              Text('Posisi Overlay', style: sectionTitleStyle),
+            ],
+          ),
+          AppSpacing.gapH8,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      settings.hasCustomPosition
+                          ? 'Tersimpan (X: ${settings.positionX!.round()} dp, Y: ${settings.positionY!.round()} dp)'
+                          : 'Bawaan (Kiri-Tengah)',
+                      style: AppTypography.body14.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    AppSpacing.gapH4,
+                    const Text(
+                      'Geser overlay di atas game untuk mengubah posisi.',
+                      style: AppTypography.caption12,
+                    ),
+                  ],
+                ),
+              ),
+              if (settings.hasCustomPosition)
+                TextButton.icon(
+                  key: const Key('reset_overlay_position_button'),
+                  onPressed: () async {
+                    await ref
+                        .read(timerSettingsProvider.notifier)
+                        .resetPosition();
+                  },
+                  icon: const Icon(Icons.refresh_rounded, size: 16.0),
+                  label: const Text('Reset Posisi'),
+                ),
+            ],
+          ),
         ],
       ),
     );

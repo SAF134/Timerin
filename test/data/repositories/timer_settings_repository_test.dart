@@ -93,5 +93,59 @@ void main() {
         container.dispose();
       },
     );
+
+    test(
+      'savePosition and resetPosition properly persist coordinates',
+      () async {
+        final repo = TimerSettingsRepository(prefs: prefs);
+        expect(repo.getSettings().hasCustomPosition, isFalse);
+
+        final saved = await repo.savePosition(120.5, 340.0);
+        expect(saved, isTrue);
+
+        final withPos = repo.getSettings();
+        expect(withPos.hasCustomPosition, isTrue);
+        expect(withPos.positionX, 120.5);
+        expect(withPos.positionY, 340.0);
+
+        final reset = await repo.resetPosition();
+        expect(reset, isTrue);
+
+        final reloaded = repo.getSettings();
+        expect(reloaded.hasCustomPosition, isFalse);
+        expect(reloaded.positionX, isNull);
+        expect(reloaded.positionY, isNull);
+      },
+    );
+
+    test(
+      'TimerSettingsNotifier setPosition and resetPosition updates state and storage',
+      () async {
+        final container = ProviderContainer(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        );
+        final notifier = container.read(timerSettingsProvider.notifier);
+
+        expect(
+          container.read(timerSettingsProvider).hasCustomPosition,
+          isFalse,
+        );
+
+        await notifier.setPosition(50.0, 100.0);
+        expect(container.read(timerSettingsProvider).hasCustomPosition, isTrue);
+        expect(container.read(timerSettingsProvider).positionX, 50.0);
+        expect(container.read(timerSettingsProvider).positionY, 100.0);
+
+        await notifier.resetPosition();
+        expect(
+          container.read(timerSettingsProvider).hasCustomPosition,
+          isFalse,
+        );
+        expect(container.read(timerSettingsProvider).positionX, isNull);
+        expect(container.read(timerSettingsProvider).positionY, isNull);
+
+        container.dispose();
+      },
+    );
   });
 }

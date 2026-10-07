@@ -61,7 +61,26 @@ class OverlayServiceController {
     return FlutterOverlayWindow.isActive();
   }
 
-  /// Memulai layanan overlay mengambang beserta notifikasi persisten (FR-010, FR-019).
+  /// Mengambil koordinat posisi saat ini dari jendela overlay (FR-011).
+  Future<OverlayPosition?> getCurrentPosition() async {
+    try {
+      return await FlutterOverlayWindow.getOverlayPosition();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Menggeser/memindahkan posisi jendela overlay secara langsung (FR-011).
+  Future<bool> moveOverlay(double x, double y) async {
+    try {
+      final res = await FlutterOverlayWindow.moveOverlay(OverlayPosition(x, y));
+      return res ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Memulai layanan overlay mengambang beserta notifikasi persisten (FR-010, FR-011, FR-019).
   /// Mengembalikan `true` jika berhasil diluncurkan, `false` jika izin belum diberikan.
   Future<bool> startOverlay({
     TimerSettings? settings,
@@ -92,7 +111,13 @@ class OverlayServiceController {
     final finalWidth = width ?? effectiveDimensions.width;
     final finalHeight = height ?? effectiveDimensions.height;
 
-    // 4. Tampilkan overlay dengan foreground service dan notifikasi persisten
+    // 4. Hitung posisi awal tersimpan jika tersedia (FR-011, SCR-007)
+    final startPos =
+        (settings?.positionX != null && settings?.positionY != null)
+        ? OverlayPosition(settings!.positionX!, settings.positionY!)
+        : null;
+
+    // 5. Tampilkan overlay dengan foreground service dan notifikasi persisten
     await FlutterOverlayWindow.showOverlay(
       height: finalHeight,
       width: finalWidth,
@@ -102,6 +127,7 @@ class OverlayServiceController {
       overlayContent: 'Timer spell sedang berjalan di atas game.',
       enableDrag: enableDrag,
       positionGravity: PositionGravity.none,
+      startPosition: startPos,
     );
 
     return true;

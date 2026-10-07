@@ -41,7 +41,7 @@ abstract final class TimerDurationPresets {
   }
 }
 
-/// Model pengaturan timer lokal (FR-005 s.d. FR-009, FR-018).
+/// Model pengaturan timer lokal beserta koordinat posisi mengambang (FR-005 s.d. FR-009, FR-011, FR-018).
 @immutable
 class TimerSettings {
   const TimerSettings({
@@ -50,6 +50,8 @@ class TimerSettings {
     this.orientation = TimerOrientation.vertical,
     this.scale = 1.0,
     this.durations = const <int>[30, 60, 120, 180, 30],
+    this.positionX,
+    this.positionY,
   });
 
   /// Jumlah timer aktif: 1–5 (FR-005, default 3 per SCR-004).
@@ -66,6 +68,17 @@ class TimerSettings {
 
   /// Durasi masing-masing timer dalam detik (FR-007).
   final List<int> durations;
+
+  /// Koordinat horizontal (X) posisi overlay dalam satuan dp jika pernah digeser (FR-011, SCR-007).
+  /// Null mengartikan posisi default (kiri-tengah layar).
+  final double? positionX;
+
+  /// Koordinat vertikal (Y) posisi overlay dalam satuan dp jika pernah digeser (FR-011, SCR-007).
+  /// Null mengartikan posisi default (kiri-tengah layar).
+  final double? positionY;
+
+  /// Apakah overlay menggunakan posisi tersimpan kustom.
+  bool get hasCustomPosition => positionX != null && positionY != null;
 
   /// Mengambil durasi dalam detik untuk timer ke-[index] (0-indexed).
   int getDurationFor(int index) {
@@ -98,6 +111,9 @@ class TimerSettings {
     TimerOrientation? orientation,
     double? scale,
     List<int>? durations,
+    double? positionX,
+    double? positionY,
+    bool clearPosition = false,
   }) {
     return TimerSettings(
       timerCount: (timerCount ?? this.timerCount).clamp(1, 5),
@@ -114,6 +130,8 @@ class TimerSettings {
               ),
             )
           : this.durations,
+      positionX: clearPosition ? null : (positionX ?? this.positionX),
+      positionY: clearPosition ? null : (positionY ?? this.positionY),
     );
   }
 
@@ -124,6 +142,8 @@ class TimerSettings {
       'orientation': orientation.name,
       'scale': scale,
       'durations': durations,
+      'positionX': positionX,
+      'positionY': positionY,
     };
   }
 
@@ -139,6 +159,8 @@ class TimerSettings {
             ?.map((e) => (e as num).toInt())
             .toList() ??
         const <int>[30, 60, 120, 180, 30];
+    final rawX = (map['positionX'] as num?)?.toDouble();
+    final rawY = (map['positionY'] as num?)?.toDouble();
 
     final timeFormat = TimeDisplayFormat.values.firstWhere(
       (e) => e.name == rawFormat,
@@ -163,6 +185,8 @@ class TimerSettings {
           ),
         ),
       ),
+      positionX: rawX,
+      positionY: rawY,
     );
   }
 
@@ -186,7 +210,9 @@ class TimerSettings {
         other.timeFormat == timeFormat &&
         other.orientation == orientation &&
         other.scale == scale &&
-        listEquals(other.durations, durations);
+        listEquals(other.durations, durations) &&
+        other.positionX == positionX &&
+        other.positionY == positionY;
   }
 
   @override
@@ -196,5 +222,7 @@ class TimerSettings {
     orientation,
     scale,
     Object.hashAll(durations),
+    positionX,
+    positionY,
   );
 }

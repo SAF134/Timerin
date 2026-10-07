@@ -48,6 +48,15 @@ void main() {
       expect(find.text('Timer 2'), findsOneWidget);
       expect(find.text('Timer 3'), findsOneWidget);
       expect(find.text('Timer 4'), findsNothing);
+
+      final posFinder = find.text('Posisi Overlay');
+      await tester.ensureVisible(posFinder);
+      expect(posFinder, findsOneWidget);
+      expect(find.text('Bawaan (Kiri-Tengah)'), findsOneWidget);
+      expect(
+        find.byKey(const Key('reset_overlay_position_button')),
+        findsNothing,
+      );
     });
 
     testWidgets('tapping timer count chip 4 updates count to 4 timers', (
@@ -134,5 +143,37 @@ void main() {
       // Dialog dismissed
       expect(find.text('Durasi Timer 1'), findsNothing);
     });
+
+    testWidgets(
+      'displays custom position and resets position when button tapped',
+      (WidgetTester tester) async {
+        final repo = TimerSettingsRepository(prefs: prefs);
+        await repo.savePosition(150.0, 300.0);
+
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
+
+        final resetButtonFinder = find.byKey(
+          const Key('reset_overlay_position_button'),
+        );
+        await tester.ensureVisible(resetButtonFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Posisi Overlay'), findsOneWidget);
+        expect(find.text('Tersimpan (X: 150 dp, Y: 300 dp)'), findsOneWidget);
+        expect(resetButtonFinder, findsOneWidget);
+
+        await tester.tap(resetButtonFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Bawaan (Kiri-Tengah)'), findsOneWidget);
+        expect(
+          find.byKey(const Key('reset_overlay_position_button')),
+          findsNothing,
+        );
+
+        expect(repo.getSettings().hasCustomPosition, isFalse);
+      },
+    );
   });
 }
