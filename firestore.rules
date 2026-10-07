@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(
+             ['email','displayName','createdAt','trialStartedAt',
+              'subscriptionEndsAt','lastSeenAt','deleteRequestedAt'])
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.trialStartedAt == null
+        && request.resource.data.subscriptionEndsAt == null;
+
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['trialStartedAt','lastSeenAt','deleteRequestedAt'])
+        && (!('lastSeenAt' in request.resource.data.diff(resource.data).affectedKeys())
+             || request.resource.data.lastSeenAt == request.time)
+        && (!('trialStartedAt' in request.resource.data.diff(resource.data).affectedKeys())
+             || (resource.data.trialStartedAt == null
+                 && request.resource.data.trialStartedAt == request.time))
+        && (!('deleteRequestedAt' in request.resource.data.diff(resource.data).affectedKeys())
+             || request.resource.data.deleteRequestedAt == request.time
+             || request.resource.data.deleteRequestedAt == null);
+
+      allow delete: if false;   // cegah reset trial lewat hapus dokumen
+    }
+
+    match /config/app {
+      allow read: if true;      // dapat dibaca sebelum login (misal Splash untuk cek force update)
+      allow write: if false;    // hanya developer lewat Console
+    }
+  }
+}
