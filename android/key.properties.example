@@ -1,0 +1,18 @@
+# ==============================================================================
+# Timerin Release Signing Configuration Template
+# ==============================================================================
+# PERINGATAN KEAMANAN (AGENTS.md & docs/04-SECURITY.md):
+# JANGAN PERNAH MENYIMPAN ATAU COMMIT FILE "key.properties" MAUPUN KEYSTORE (*.jks) KE GIT!
+# Berkas ini dilindungi dan diabaikan secara ketat oleh .gitignore.
+#
+# CARA PENGGUNAAN:
+# 1. Hasilkan file release keystore menggunakan perintah Java keytool:
+#    keytool -genkey -v -keystore timerin-release.jks -alias timerin-key -keyalg RSA -keysize 2048 -validity 10000
+# 2. Salin template ini menjadi file bernama "android/key.properties".
+# 3. Masukkan password dan lokasi file keystore yang telah Anda buat.
+# ==============================================================================
+
+keyAlias=timerin-key
+keyPassword=ganti_dengan_password_kunci_anda
+storeFile=../timerin-release.jks
+storePassword=ganti_dengan_password_keystore_anda
