@@ -84,6 +84,9 @@ void main() {
     when(() => mockUser.email).thenReturn('raka@example.com');
     when(() => mockAuthService.currentUser).thenReturn(mockUser);
     when(() => mockAuthService.signOut()).thenAnswer((_) async {});
+    when(
+      () => mockPermissionService.isOverlayPermissionGranted(),
+    ).thenAnswer((_) async => true);
   });
 
   Widget createWidgetUnderTest({
