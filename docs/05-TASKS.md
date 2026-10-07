@@ -35,7 +35,7 @@
 | T-011 | Halaman Pengaturan (Selesai) | FR-017 | DESIGN SCR-006 | semua item berfungsi |
 | T-012 | Geser posisi overlay (Selesai) | FR-011 | DESIGN SCR-007 | posisi tersimpan |
 | T-013 | Tes Firestore rules (emulator) + unit test (Selesai) | NFR-005 | TECH §6,9 | rules tolak ubah langganan, tolak trial ganda, read config publik |
-| T-014 | Uji perangkat (≥ 3 merek), tips baterai, optimasi CPU/RAM | NFR-002, 003 | PRD §5 | target NFR tercapai |
+| T-014 | Uji perangkat (≥ 3 merek), tips baterai, optimasi CPU/RAM (Selesai) | NFR-002, 003 | PRD §5 | target NFR tercapai |
 | T-015 | Review keamanan & checklist Play Protect (Selesai) | NFR-005 | SECURITY | semua checklist tercentang |
 | T-016 | Kebijakan Privasi, aset rilis, signing, build APK, unggah ke Drive + SHA-256 (Selesai) | n/a | SECURITY §3,5 | APK terpasang dari Drive & lolos uji pemasangan |
 | T-017 | **Mulai sekarang:** daftar akun *limited distribution* (gratis), daftarkan package name + SHA-256 keystore rilis; upgrade ke akun penuh sebelum melebihi 20 perangkat | NFR-005 | SECURITY §3 | regulasi 30 Sep 2026 aktif; package name terdaftar; perangkat beta ≤ 20 |
