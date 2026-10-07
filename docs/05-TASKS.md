@@ -31,7 +31,7 @@
 | T-007 | Pengaturan timer (jumlah, format, durasi, ukuran, susunan) + simpan lokal (Selesai) | FR-005..009, 018 | PRD, DESIGN SCR-004 | overlay mengikuti pengaturan, pulih setelah restart |
 | T-008 | Beranda lengkap + pratinjau (terintegrasi AccessService) (Selesai) | FR-004 | DESIGN SCR-004 | semua state banner tampil benar & sinkron status akses |
 | T-009 | AccessService: waktu server, status akses, mulai trial atomik, cache monotonik + boot count, stop overlay saat habis (Selesai) | FR-013, 014, NFR-001, 004 | TECH §5; PRD §3 | unit test semua status & ubah-jam; trial aman dari manipulasi |
-| T-010 | Halaman Berlangganan (QRIS, email bukti, segarkan) | FR-015, 016 | DESIGN SCR-005 | status berubah setelah developer mengisi tanggal |
+| T-010 | Halaman Berlangganan (QRIS, email bukti, segarkan) (Selesai) | FR-015, 016 | DESIGN SCR-005 | status berubah setelah developer mengisi tanggal |
 | T-011 | Halaman Pengaturan | FR-017 | DESIGN SCR-006 | semua item berfungsi |
 | T-012 | Geser posisi overlay | FR-011 | DESIGN SCR-007 | posisi tersimpan |
 | T-013 | Tes Firestore rules (emulator) + unit test | NFR-005 | TECH §6,9 | rules tolak ubah langganan, tolak trial ganda, read config publik |

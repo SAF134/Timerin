@@ -79,6 +79,7 @@ void main() {
     prefs = await SharedPreferences.getInstance();
 
     registerFallbackValue(const TimerSettings());
+    when(() => mockUser.uid).thenReturn('test_uid');
     when(() => mockUser.displayName).thenReturn('Raka MLBB');
     when(() => mockUser.email).thenReturn('raka@example.com');
     when(() => mockAuthService.currentUser).thenReturn(mockUser);
