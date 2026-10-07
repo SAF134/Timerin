@@ -4,15 +4,18 @@ import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
 import 'package:timerin/core/theme/app_spacing.dart';
 import 'package:timerin/core/theme/app_typography.dart';
+import 'package:timerin/data/repositories/timer_settings_repository.dart';
 import 'package:timerin/features/auth/presentation/login_screen.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
+import 'package:timerin/features/home/presentation/widgets/timer_settings_card.dart';
 import 'package:timerin/features/overlay/presentation/overlay_permission_dialog.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
 import 'package:timerin/features/overlay/services/overlay_service_controller.dart';
 
 /// Halaman Beranda (M1 Walking Skeleton).
 ///
-/// Menyediakan kontrol peluncuran/penghentian overlay spell (T-005, FR-004, FR-010)
+/// Menyediakan kontrol peluncuran/penghentian overlay spell (T-005, FR-004, FR-010),
+/// panel konfigurasi pengaturan timer lokal (T-007, FR-005..FR-009, FR-018),
 /// dan navigasi profil/pengaturan.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -37,7 +40,7 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: AppSpacing.p24,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -187,7 +190,12 @@ class HomeScreen extends ConsumerWidget {
                                 final controller = ref.read(
                                   overlayServiceControllerProvider,
                                 );
-                                final success = await controller.startOverlay();
+                                final settings = ref.read(
+                                  timerSettingsProvider,
+                                );
+                                final success = await controller.startOverlay(
+                                  settings: settings,
+                                );
                                 if (success) {
                                   ref
                                       .read(overlayActiveProvider.notifier)
@@ -212,8 +220,11 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              AppSpacing.gapH24,
 
-              const Spacer(),
+              // Panel Pengaturan Timer Overlay (T-007)
+              const TimerSettingsCard(),
+              AppSpacing.gapH24,
 
               // Logout Button
               OutlinedButton.icon(

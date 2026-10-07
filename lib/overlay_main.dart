@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:timerin/core/theme/app_theme.dart';
-import 'package:timerin/features/overlay/presentation/overlay_timer_bubble.dart';
+import 'package:timerin/features/overlay/presentation/overlay_container.dart';
 
 /// Entry point khusus untuk proses background flutter_overlay_window.
 @pragma('vm:entry-point')
@@ -20,7 +20,7 @@ class OverlayApp extends StatelessWidget {
       theme: AppTheme.theme,
       home: const Scaffold(
         backgroundColor: Colors.transparent,
-        body: Center(child: OverlayTimerBubble()),
+        body: Center(child: OverlayContainer()),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timerin/core/theme/app_theme.dart';
+import 'package:timerin/data/models/timer_settings_model.dart';
 import 'package:timerin/data/models/user_model.dart';
 import 'package:timerin/data/repositories/onboarding_repository.dart';
 import 'package:timerin/features/auth/presentation/login_screen.dart';
@@ -46,6 +47,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     prefs = await SharedPreferences.getInstance();
 
+    registerFallbackValue(const TimerSettings());
     when(() => mockUser.displayName).thenReturn('Raka MLBB');
     when(() => mockUser.email).thenReturn('raka@example.com');
     when(() => mockAuthService.currentUser).thenReturn(mockUser);
@@ -71,7 +73,7 @@ void main() {
     );
   }
 
-  group('HomeScreen Tests (T-005 / FR-004, FR-010)', () {
+  group('HomeScreen Tests (T-005, T-007 / FR-004, FR-010)', () {
     testWidgets(
       'renders user card and overlay control card with inactive status',
       (WidgetTester tester) async {
@@ -104,7 +106,11 @@ void main() {
         verify(
           () => mockPermissionService.isOverlayPermissionGranted(),
         ).called(1);
-        verifyNever(() => mockOverlayController.startOverlay());
+        verifyNever(
+          () => mockOverlayController.startOverlay(
+            settings: any(named: 'settings'),
+          ),
+        );
       },
     );
 
@@ -115,7 +121,9 @@ void main() {
           () => mockPermissionService.isOverlayPermissionGranted(),
         ).thenAnswer((_) async => true);
         when(
-          () => mockOverlayController.startOverlay(),
+          () => mockOverlayController.startOverlay(
+            settings: any(named: 'settings'),
+          ),
         ).thenAnswer((_) async => true);
 
         await tester.pumpWidget(createWidgetUnderTest());
@@ -124,7 +132,11 @@ void main() {
         await tester.tap(find.byKey(const Key('start_overlay_button')));
         await tester.pumpAndSettle();
 
-        verify(() => mockOverlayController.startOverlay()).called(1);
+        verify(
+          () => mockOverlayController.startOverlay(
+            settings: any(named: 'settings'),
+          ),
+        ).called(1);
         expect(find.text('Status: Aktif'), findsOneWidget);
         expect(find.byKey(const Key('stop_overlay_button')), findsOneWidget);
         expect(find.text('Overlay spell telah diaktifkan.'), findsOneWidget);
@@ -138,7 +150,9 @@ void main() {
           () => mockPermissionService.isOverlayPermissionGranted(),
         ).thenAnswer((_) async => true);
         when(
-          () => mockOverlayController.startOverlay(),
+          () => mockOverlayController.startOverlay(
+            settings: any(named: 'settings'),
+          ),
         ).thenAnswer((_) async => true);
         when(
           () => mockOverlayController.stopOverlay(),
@@ -168,6 +182,9 @@ void main() {
     ) async {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
+
+      await tester.ensureVisible(find.text('Keluar'));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Keluar'));
       await tester.pumpAndSettle();

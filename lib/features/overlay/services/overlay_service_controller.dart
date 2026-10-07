@@ -1,5 +1,6 @@
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:timerin/data/models/timer_settings_model.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
 
 final overlayServiceControllerProvider = Provider<OverlayServiceController>((
@@ -35,6 +36,26 @@ class OverlayServiceController {
 
   final OverlayPermissionService _permissionService;
 
+  /// Menghitung dimensi lebar dan tinggi window native berdasarkan pengaturan timer (FR-005, FR-008, FR-009).
+  static ({int width, int height}) calculateWindowDimensions(
+    TimerSettings settings,
+  ) {
+    final bubbleSize = 56.0 * settings.scale;
+    final gap = 8.0 * settings.scale;
+    final totalLength =
+        (settings.timerCount * bubbleSize) + ((settings.timerCount - 1) * gap);
+
+    if (settings.orientation == TimerOrientation.vertical) {
+      final width = (bubbleSize + 28.0).ceil();
+      final height = (totalLength + 32.0).ceil();
+      return (width: width, height: height);
+    } else {
+      final width = (totalLength + 32.0).ceil();
+      final height = (bubbleSize + 28.0).ceil();
+      return (width: width, height: height);
+    }
+  }
+
   /// Memeriksa apakah overlay sedang aktif di layar.
   Future<bool> isOverlayActive() async {
     return FlutterOverlayWindow.isActive();
@@ -43,8 +64,9 @@ class OverlayServiceController {
   /// Memulai layanan overlay mengambang beserta notifikasi persisten (FR-010, FR-019).
   /// Mengembalikan `true` jika berhasil diluncurkan, `false` jika izin belum diberikan.
   Future<bool> startOverlay({
-    int height = 220,
-    int width = 220,
+    TimerSettings? settings,
+    int? height,
+    int? width,
     OverlayAlignment alignment = OverlayAlignment.centerLeft,
     bool enableDrag = true,
   }) async {
@@ -62,10 +84,18 @@ class OverlayServiceController {
       await _permissionService.requestNotificationPermission();
     }
 
-    // 3. Tampilkan overlay dengan foreground service dan notifikasi persisten
+    // 3. Tentukan ukuran jendela sesuai pengaturan
+    final effectiveDimensions = settings != null
+        ? calculateWindowDimensions(settings)
+        : (width: 220, height: 220);
+
+    final finalWidth = width ?? effectiveDimensions.width;
+    final finalHeight = height ?? effectiveDimensions.height;
+
+    // 4. Tampilkan overlay dengan foreground service dan notifikasi persisten
     await FlutterOverlayWindow.showOverlay(
-      height: height,
-      width: width,
+      height: finalHeight,
+      width: finalWidth,
       alignment: alignment,
       visibility: NotificationVisibility.visibilityPublic,
       overlayTitle: 'Timerin Aktif',
@@ -75,6 +105,12 @@ class OverlayServiceController {
     );
 
     return true;
+  }
+
+  /// Mengubah ukuran jendela overlay saat sedang berjalan.
+  Future<void> updateDimensions(TimerSettings settings) async {
+    final dims = calculateWindowDimensions(settings);
+    await FlutterOverlayWindow.resizeOverlay(dims.width, dims.height, true);
   }
 
   /// Menghentikan layanan overlay dan menghapus notifikasi persisten.

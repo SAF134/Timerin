@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:timerin/data/models/timer_settings_model.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
 import 'package:timerin/features/overlay/services/overlay_service_controller.dart';
 
@@ -88,14 +89,49 @@ void main() {
       expect(methodCalls.where((c) => c.method == 'closeOverlay'), isNotEmpty);
     });
 
-    test('isOverlayActive queries isActive channel method', () async {
-      final active = await controller.isOverlayActive();
+    test(
+      'calculateWindowDimensions computes compact size based on orientation and scale',
+      () {
+        const verticalSettings = TimerSettings(
+          timerCount: 3,
+          orientation: TimerOrientation.vertical,
+          scale: 1.0,
+        );
+        final verticalDims = OverlayServiceController.calculateWindowDimensions(
+          verticalSettings,
+        );
+        expect(verticalDims.width, 84); // (56 + 28)
+        expect(verticalDims.height, 216); // (3*56 + 2*8 + 32)
 
-      expect(active, isTrue);
-      expect(
-        methodCalls.where((c) => c.method == 'isOverlayActive'),
-        isNotEmpty,
-      );
+        const horizontalSettings = TimerSettings(
+          timerCount: 3,
+          orientation: TimerOrientation.horizontal,
+          scale: 1.0,
+        );
+        final horizontalDims =
+            OverlayServiceController.calculateWindowDimensions(
+              horizontalSettings,
+            );
+        expect(horizontalDims.width, 216);
+        expect(horizontalDims.height, 84);
+      },
+    );
+
+    test('updateDimensions invokes resizeOverlay on overlay channel', () async {
+      const overlayChannel = MethodChannel('x-slayer/overlay');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(overlayChannel, (MethodCall call) async {
+            methodCalls.add(call);
+            return true;
+          });
+
+      const settings = TimerSettings(timerCount: 2);
+      await controller.updateDimensions(settings);
+
+      expect(methodCalls.where((c) => c.method == 'resizeOverlay'), isNotEmpty);
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(overlayChannel, null);
     });
   });
 }
