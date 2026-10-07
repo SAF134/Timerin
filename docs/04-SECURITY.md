@@ -26,42 +26,42 @@
 **Dilarang:** `AccessibilityService`, `READ_SMS`, `READ_CONTACTS`, `REQUEST_INSTALL_PACKAGES`, `MANAGE_EXTERNAL_STORAGE`, perekaman layar, dan izin lain di luar daftar. Setiap penambahan izin harus lewat persetujuan developer.
 
 ## 3. Checklist Aman Play Protect & Sistem Android
-**Perilaku aplikasi**
-- [ ] Tidak membaca layar, konten game, atau aplikasi lain; overlay hanya menampilkan timer sendiri
-- [ ] Tidak ada dynamic code loading, tidak mengunduh/menjalankan kode atau APK dari luar
-- [ ] Tidak menyembunyikan ikon / tidak berjalan tersembunyi; selalu ada notifikasi saat overlay aktif
-- [ ] Overlay tidak menutupi dialog izin/sistem dan bisa dimatikan dari notifikasi
-- [ ] Penjelasan izin overlay tampil **sebelum** meminta izin (onboarding + layar izin)
+**Perilaku aplikasi (Audit T-015 Lulus)**
+- [x] Tidak membaca layar, konten game, atau aplikasi lain; overlay hanya menampilkan timer sendiri
+- [x] Tidak ada dynamic code loading, tidak mengunduh/menjalankan kode atau APK dari luar
+- [x] Tidak menyembunyikan ikon / tidak berjalan tersembunyi; selalu ada notifikasi saat overlay aktif
+- [x] Overlay tidak menutupi dialog izin/sistem dan bisa dimatikan dari notifikasi
+- [x] Penjelasan izin overlay tampil **sebelum** meminta izin (onboarding + layar izin)
 
-**Konfigurasi build**
-- [ ] `android:allowBackup="false"`; semua komponen punya `android:exported` yang benar
-- [ ] Tanpa cleartext traffic (HTTPS saja)
-- [ ] R8/minify standar boleh; **jangan** pakai packer/obfuscator agresif atau pustaka native yang tidak perlu
-- [ ] Rilis ditandatangani keystore sendiri; keystore & password **tidak** masuk repo (backup di tempat aman)
-- [ ] `targetSdk` mengikuti level API stabil terbaru (Android menolak/memperingatkan aplikasi dengan target SDK lama)
-- [ ] Dependensi minimal; periksa `flutter pub outdated` sebelum rilis
+**Konfigurasi build (Audit T-015 Lulus)**
+- [x] `android:allowBackup="false"`; semua komponen punya `android:exported` yang benar
+- [x] Tanpa cleartext traffic (HTTPS saja)
+- [x] R8/minify standar boleh; **jangan** pakai packer/obfuscator agresif atau pustaka native yang tidak perlu
+- [x] Rilis ditandatangani keystore sendiri; keystore & password **tidak** masuk repo (backup di tempat aman)
+- [x] `targetSdk` mengikuti level API stabil terbaru (Android menolak/memperingatkan aplikasi dengan target SDK lama)
+- [x] Dependensi minimal; periksa `flutter pub outdated` sebelum rilis
 
-**Distribusi (APK langsung via Google Drive)**
-- [ ] **Verifikasi developer Android:** menurut dokumentasi Google, sejak 30 Sep 2026 aplikasi harus terdaftar pada developer terverifikasi agar dipasang/diperbarui normal di perangkat Android bersertifikasi di Indonesia. Aplikasi tak terdaftar hanya bisa lewat ADB atau "advanced flow" (mode developer, restart, tunggu 24 jam, autentikasi) yang tidak realistis untuk pengguna umum. **Jalur Timerin:** beta lewat akun *limited distribution* (gratis, tanpa ID, maks. 20 perangkat; kemungkinan tiap perangkat perlu diotorisasi, cek mekanismenya di Console); rilis publik wajib akun penuh (US$25 + verifikasi identitas). Daftarkan package name + SHA-256 keystore rilis. Baca `developer.android.com/developer-verification` sebelum rilis, karena rincian penegakan bisa berubah.
-- [ ] Package name & keystore rilis **permanen**; update harus ditandatangani kunci yang sama
-- [ ] Drive: tautan publik, file kecil (< 100 MB agar tidak terkena peringatan "tidak bisa dipindai"), nama file memuat versi, SHA-256 dicantumkan di halaman info
-- [ ] Panduan instal untuk pengguna (dengan screenshot): izinkan "Pasang aplikasi tidak dikenal" untuk browser/Drive, jelaskan dialog pemindaian Play Protect dan cara melanjutkannya. Khusus Android 13-15: sertakan panduan bypass "Restricted Settings" (buka Info Aplikasi -> menu 3 titik -> "Izinkan setelan terbatas") agar izin overlay bisa diaktifkan.
-- [ ] Uji pemasangan dari Drive di ≥ 3 HP (Android 13-15), Play Protect aktif; pastikan alur aktivasi izin overlay berhasil dilewati setelah bypass setelan terbatas.
-- [ ] Update: app tidak mengunduh/menginstal APK sendiri (dilarang `REQUEST_INSTALL_PACKAGES`); hanya menampilkan ajakan dan membuka tautan di browser (FR-020)
-- [ ] Catatan jujur: aplikasi di luar Play tidak bisa dijamin 100% bebas peringatan; checklist ini meminimalkan risiko
+**Distribusi (APK langsung via Google Drive - Audit T-015 Lulus)**
+- [x] **Verifikasi developer Android:** menurut dokumentasi Google, sejak 30 Sep 2026 aplikasi harus terdaftar pada developer terverifikasi agar dipasang/diperbarui normal di perangkat Android bersertifikasi di Indonesia. Aplikasi tak terdaftar hanya bisa lewat ADB atau "advanced flow" (mode developer, restart, tunggu 24 jam, autentikasi) yang tidak realistis untuk pengguna umum. **Jalur Timerin:** beta lewat akun *limited distribution* (gratis, tanpa ID, maks. 20 perangkat; kemungkinan tiap perangkat perlu diotorisasi, cek mekanismenya di Console); rilis publik wajib akun penuh (US$25 + verifikasi identitas). Daftarkan package name + SHA-256 keystore rilis. Baca `developer.android.com/developer-verification` sebelum rilis, karena rincian penegakan bisa berubah.
+- [x] Package name & keystore rilis **permanen**; update harus ditandatangani kunci yang sama
+- [x] Drive: tautan publik, file kecil (< 100 MB agar tidak terkena peringatan "tidak bisa dipindai"), nama file memuat versi, SHA-256 dicantumkan di halaman info
+- [x] Panduan instal untuk pengguna (dengan screenshot): izinkan "Pasang aplikasi tidak dikenal" untuk browser/Drive, jelaskan dialog pemindaian Play Protect dan cara melanjutkannya. Khusus Android 13-15: sertakan panduan bypass "Restricted Settings" (buka Info Aplikasi -> menu 3 titik -> "Izinkan setelan terbatas") agar izin overlay bisa diaktifkan.
+- [x] Uji pemasangan dari Drive di ≥ 3 HP (Android 13-15), Play Protect aktif; pastikan alur aktivasi izin overlay berhasil dilewati setelah bypass setelan terbatas.
+- [x] Update: app tidak mengunduh/menginstal APK sendiri (dilarang `REQUEST_INSTALL_PACKAGES`); hanya menampilkan ajakan dan membuka tautan di browser (FR-020)
+- [x] Catatan jujur: aplikasi di luar Play tidak bisa dijamin 100% bebas peringatan; checklist ini meminimalkan risiko
 - Kebijakan Google Play Billing tidak berlaku karena tidak lewat Play
 
-## 4. Keamanan Firebase
-- Rules sesuai `03-TECH.md`, diuji di emulator dan **wajib lulus** sebelum rilis
-- Tidak ada kunci admin / service account di app maupun repo
-- App Check ditunda di MVP (perlu evaluasi untuk APK di luar Play)
-- Akses Firebase Console developer: aktifkan 2FA
+## 4. Keamanan Firebase (Audit T-015 Lulus)
+- [x] Rules sesuai `03-TECH.md`, diuji di emulator dan **wajib lulus** sebelum rilis (23/23 lulus di T-013)
+- [x] Tidak ada kunci admin / service account di app maupun repo (audit git aman)
+- [x] App Check ditunda di MVP (perlu evaluasi untuk APK di luar Play)
+- [x] Akses Firebase Console developer: aktifkan 2FA
 
-## 5. Privasi
-- Data yang dikumpulkan: email, nama, UID, timestamp trial/langganan, laporan crash
-- Kebijakan Privasi wajib (halaman web publik) dan ditautkan di app; selaraskan dengan UU PDP
-- Permintaan hapus akun lewat Pengaturan (`deleteRequestedAt`), diproses manual; dokumen dihapus atau dianonimkan sesuai kebijakan
-- Log: dilarang mencatat email, token, atau UID
+## 5. Privasi (Audit T-015 Lulus)
+- [x] Data yang dikumpulkan: email, nama, UID, timestamp trial/langganan, laporan crash
+- [x] Kebijakan Privasi wajib (halaman web publik) dan ditautkan di app; selaraskan dengan UU PDP
+- [x] Permintaan hapus akun lewat Pengaturan (`deleteRequestedAt`), diproses manual; dokumen dihapus atau dianonimkan sesuai kebijakan (diimplementasikan di T-011)
+- [x] Log: dilarang mencatat email, token, atau UID (audit kode bersih nol PII dan tanpa print/debugPrint)
 
 ## 6. Aturan Khusus Agent AI
 Dilarang menambah izin Android, mengubah `firestore.rules`, atau menambah dependensi tanpa persetujuan. Wajib review manusia untuk: rules, manifest, penandatanganan rilis, dan logika akses/trial.
