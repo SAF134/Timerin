@@ -14,6 +14,8 @@ import 'package:timerin/features/home/presentation/home_screen.dart';
 import 'package:timerin/features/overlay/presentation/overlay_permission_dialog.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
 import 'package:timerin/features/overlay/services/overlay_service_controller.dart';
+import 'package:timerin/features/subscription/domain/access_state.dart';
+import 'package:timerin/features/subscription/services/access_service.dart';
 
 class MockAuthService extends Mock implements AuthService {}
 
@@ -24,6 +26,29 @@ class MockOverlayPermissionService extends Mock
 
 class MockOverlayServiceController extends Mock
     implements OverlayServiceController {}
+
+class FakeAccessNotifier extends AccessNotifier {
+  FakeAccessNotifier(this._initialState);
+
+  final AccessState _initialState;
+  bool startTrialCalled = false;
+
+  @override
+  AccessState build() => _initialState;
+
+  @override
+  Future<void> refreshAccess() async {}
+
+  @override
+  Future<bool> startTrial() async {
+    startTrialCalled = true;
+    state = const AccessState(
+      status: AccessStatus.trial,
+      remainingAccess: Duration(hours: 24),
+    );
+    return true;
+  }
+}
 
 void main() {
   late MockAuthService mockAuthService;
@@ -54,7 +79,15 @@ void main() {
     when(() => mockAuthService.signOut()).thenAnswer((_) async {});
   });
 
-  Widget createWidgetUnderTest() {
+  Widget createWidgetUnderTest({
+    AccessState accessState = const AccessState(
+      status: AccessStatus.trial,
+      remainingAccess: Duration(hours: 20),
+    ),
+    FakeAccessNotifier? customNotifier,
+  }) {
+    final notifier = customNotifier ?? FakeAccessNotifier(accessState);
+
     return ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
@@ -68,14 +101,15 @@ void main() {
         overlayServiceControllerProvider.overrideWithValue(
           mockOverlayController,
         ),
+        accessStateProvider.overrideWith(() => notifier),
       ],
       child: MaterialApp(theme: AppTheme.theme, home: const HomeScreen()),
     );
   }
 
-  group('HomeScreen Tests (T-005, T-007 / FR-004, FR-010)', () {
+  group('HomeScreen Tests (T-005, T-007, T-009 / FR-004, FR-010, FR-013, FR-014)', () {
     testWidgets(
-      'renders user card and overlay control card with inactive status',
+      'renders user card, access banner, and overlay control card with inactive status',
       (WidgetTester tester) async {
         await tester.pumpWidget(createWidgetUnderTest());
         await tester.pump();
@@ -83,6 +117,7 @@ void main() {
         expect(find.text('Selamat Datang,'), findsOneWidget);
         expect(find.text('Raka MLBB'), findsOneWidget);
         expect(find.text('raka@example.com'), findsOneWidget);
+        expect(find.text('sisa 20 jam'), findsOneWidget);
         expect(find.text('Overlay Spell'), findsOneWidget);
         expect(find.text('Status: Nonaktif'), findsOneWidget);
         expect(find.byKey(const Key('start_overlay_button')), findsOneWidget);
@@ -110,6 +145,71 @@ void main() {
           () => mockOverlayController.startOverlay(
             settings: any(named: 'settings'),
           ),
+        );
+      },
+    );
+
+    testWidgets(
+      'tapping Aktifkan Overlay when status is BARU starts trial atomically before overlay (FR-013)',
+      (WidgetTester tester) async {
+        when(
+          () => mockPermissionService.isOverlayPermissionGranted(),
+        ).thenAnswer((_) async => true);
+        when(
+          () => mockOverlayController.startOverlay(
+            settings: any(named: 'settings'),
+          ),
+        ).thenAnswer((_) async => true);
+
+        final notifier = FakeAccessNotifier(
+          const AccessState(
+            status: AccessStatus.baru,
+            remainingAccess: Duration.zero,
+          ),
+        );
+
+        await tester.pumpWidget(
+          createWidgetUnderTest(customNotifier: notifier),
+        );
+        await tester.pump();
+
+        await tester.tap(find.byKey(const Key('start_overlay_button')));
+        await tester.pumpAndSettle();
+
+        expect(notifier.startTrialCalled, isTrue);
+        verify(
+          () => mockOverlayController.startOverlay(
+            settings: any(named: 'settings'),
+          ),
+        ).called(1);
+        expect(find.text('Status: Aktif'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'tapping Aktifkan Overlay when status is HABIS prevents launch and shows snackbar (FR-014)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          createWidgetUnderTest(
+            accessState: const AccessState(
+              status: AccessStatus.habis,
+              remainingAccess: Duration.zero,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        await tester.tap(find.byKey(const Key('start_overlay_button')));
+        await tester.pumpAndSettle();
+
+        verifyNever(
+          () => mockOverlayController.startOverlay(
+            settings: any(named: 'settings'),
+          ),
+        );
+        expect(
+          find.text('Masa aktif telah habis. Silakan berlangganan.'),
+          findsOneWidget,
         );
       },
     );

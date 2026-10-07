@@ -62,6 +62,46 @@ class UserRepository {
     ).update(<String, dynamic>{'lastSeenAt': FieldValue.serverTimestamp()});
   }
 
+  /// Memperbarui [lastSeenAt] dan mengambil timestamp server resmi (TECH §5 item 1).
+  Future<DateTime> syncServerTime(String uid) async {
+    final docRef = _userDoc(uid);
+    await docRef.update(<String, dynamic>{
+      'lastSeenAt': FieldValue.serverTimestamp(),
+    });
+    final snapshot = await docRef.get(const GetOptions(source: Source.server));
+    final data = snapshot.data();
+    if (data != null && data['lastSeenAt'] is Timestamp) {
+      return (data['lastSeenAt'] as Timestamp).toDate();
+    }
+    return DateTime.now();
+  }
+
+  /// Memulai masa trial 24 jam secara atomik (FR-013, TECH §5 item 5).
+  /// Memastikan `trialStartedAt` hanya ditulis sekali seumur hidup akun.
+  Future<UserModel> startTrial(String uid) async {
+    final docRef = _userDoc(uid);
+    return _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists || snapshot.data() == null) {
+        throw StateError('Pengguna tidak ditemukan');
+      }
+      final data = snapshot.data()!;
+      if (data['trialStartedAt'] != null) {
+        throw StateError('Trial sudah pernah dimulai');
+      }
+
+      transaction.update(docRef, <String, dynamic>{
+        'trialStartedAt': FieldValue.serverTimestamp(),
+        'lastSeenAt': FieldValue.serverTimestamp(),
+      });
+
+      final updatedData = Map<String, dynamic>.from(data);
+      updatedData['trialStartedAt'] = Timestamp.now();
+      updatedData['lastSeenAt'] = Timestamp.now();
+      return UserModel.fromMap(uid, updatedData);
+    });
+  }
+
   /// Mengajukan permintaan penghapusan akun (`deleteRequestedAt`).
   Future<void> requestAccountDeletion(String uid) async {
     await _userDoc(uid).update(<String, dynamic>{

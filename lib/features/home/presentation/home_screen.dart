@@ -11,20 +11,36 @@ import 'package:timerin/features/home/presentation/widgets/timer_settings_card.d
 import 'package:timerin/features/overlay/presentation/overlay_permission_dialog.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
 import 'package:timerin/features/overlay/services/overlay_service_controller.dart';
+import 'package:timerin/features/subscription/services/access_service.dart';
 
 /// Halaman Beranda (M1 Walking Skeleton).
 ///
 /// Menyediakan kontrol peluncuran/penghentian overlay spell (T-005, FR-004, FR-010),
 /// panel konfigurasi pengaturan timer lokal (T-007, FR-005..FR-009, FR-018),
+/// verifikasi hak akses & waktu server (T-009, FR-013, FR-014),
 /// dan navigasi profil/pengaturan.
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(accessStateProvider.notifier).refreshAccess();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userModelAsync = ref.watch(currentUserModelProvider);
     final authUser = ref.watch(authServiceProvider).currentUser;
     final isOverlayActive = ref.watch(overlayActiveProvider);
+    final accessState = ref.watch(accessStateProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -45,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              // User Card
+              // User Card & Status Akses
               Container(
                 padding: AppSpacing.p24,
                 decoration: const BoxDecoration(
@@ -55,9 +71,35 @@ class HomeScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text(
-                      'Selamat Datang,',
-                      style: AppTypography.caption12,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        const Text(
+                          'Selamat Datang,',
+                          style: AppTypography.caption12,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0,
+                            vertical: 2.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accessState.isExpired
+                                ? AppColors.error.withValues(alpha: 0.1)
+                                : AppColors.accent.withValues(alpha: 0.1),
+                            borderRadius: AppRadius.buttonRadius,
+                          ),
+                          child: Text(
+                            accessState.remainingFormatted,
+                            style: AppTypography.caption12.copyWith(
+                              color: accessState.isExpired
+                                  ? AppColors.error
+                                  : AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     AppSpacing.gapH4,
                     Text(
@@ -76,7 +118,7 @@ class HomeScreen extends ConsumerWidget {
               ),
               AppSpacing.gapH24,
 
-              // Overlay Control Card (T-005)
+              // Overlay Control Card (T-005, T-009)
               Container(
                 padding: AppSpacing.p24,
                 decoration: BoxDecoration(
@@ -174,6 +216,43 @@ class HomeScreen extends ConsumerWidget {
                           : ElevatedButton.icon(
                               key: const Key('start_overlay_button'),
                               onPressed: () async {
+                                // 1. Verifikasi hak akses (T-009, FR-013, FR-014)
+                                if (accessState.isExpired) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context)
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Masa aktif telah habis. Silakan berlangganan.',
+                                          ),
+                                        ),
+                                      );
+                                  }
+                                  return;
+                                }
+
+                                if (accessState.isNew) {
+                                  final started = await ref
+                                      .read(accessStateProvider.notifier)
+                                      .startTrial();
+                                  if (!started) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                        ..hideCurrentSnackBar()
+                                        ..showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Gagal memulai trial. Periksa koneksi internet.',
+                                            ),
+                                          ),
+                                        );
+                                    }
+                                    return;
+                                  }
+                                }
+
+                                // 2. Verifikasi izin overlay (T-006, FR-012)
                                 final permissionService = ref.read(
                                   overlayPermissionServiceProvider,
                                 );
@@ -187,6 +266,7 @@ class HomeScreen extends ConsumerWidget {
                                   return;
                                 }
 
+                                // 3. Luncurkan overlay dengan konfigurasi timer (T-005, T-007)
                                 final controller = ref.read(
                                   overlayServiceControllerProvider,
                                 );

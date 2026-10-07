@@ -3,6 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:timerin/data/models/user_model.dart';
 import 'package:timerin/data/repositories/user_repository.dart';
 
 class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
@@ -16,6 +17,8 @@ class MockDocumentReference extends Mock
 class MockDocumentSnapshot extends Mock
     implements DocumentSnapshot<Map<String, dynamic>> {}
 
+class MockTransaction extends Mock implements Transaction {}
+
 void main() {
   late MockFirebaseFirestore mockFirestore;
   late MockCollectionReference mockCollection;
@@ -24,6 +27,7 @@ void main() {
   late UserRepository repository;
 
   setUp(() {
+    registerFallbackValue(const GetOptions());
     mockFirestore = MockFirebaseFirestore();
     mockCollection = MockCollectionReference();
     mockDocRef = MockDocumentReference();
@@ -112,6 +116,55 @@ void main() {
       await repository.updateLastSeen('user_123');
 
       verify(() => mockDocRef.update(any<Map<String, dynamic>>())).called(1);
+    });
+
+    test('syncServerTime writes lastSeenAt and reads back timestamp', () async {
+      final now = DateTime(2026, 10, 7, 15, 0);
+      when(
+        () => mockDocRef.update(any<Map<String, dynamic>>()),
+      ).thenAnswer((_) async {});
+      when(
+        () => mockDocRef.get(any<GetOptions>()),
+      ).thenAnswer((_) async => mockSnapshot);
+      when(
+        () => mockSnapshot.data(),
+      ).thenReturn(<String, dynamic>{'lastSeenAt': Timestamp.fromDate(now)});
+
+      final result = await repository.syncServerTime('user_123');
+
+      expect(result, equals(now));
+      verify(() => mockDocRef.update(any<Map<String, dynamic>>())).called(1);
+      verify(() => mockDocRef.get(any<GetOptions>())).called(1);
+    });
+
+    test('startTrial executes transaction and writes trialStartedAt', () async {
+      when(() => mockFirestore.runTransaction<UserModel>(any())).thenAnswer((
+        invocation,
+      ) async {
+        final tx =
+            invocation.positionalArguments[0]
+                as Future<UserModel> Function(Transaction);
+        final mockTx = MockTransaction();
+        when(
+          () => mockTx.get(mockDocRef),
+        ).thenAnswer((_) async => mockSnapshot);
+        when(() => mockSnapshot.exists).thenReturn(true);
+        when(() => mockSnapshot.data()).thenReturn(<String, dynamic>{
+          'email': 'pemain@mlbb.com',
+          'displayName': 'Pemain',
+          'trialStartedAt': null,
+        });
+        when(
+          () => mockTx.update(mockDocRef, any<Map<String, dynamic>>()),
+        ).thenReturn(mockTx);
+        return tx(mockTx);
+      });
+
+      final user = await repository.startTrial('user_123');
+
+      expect(user.uid, 'user_123');
+      expect(user.trialStartedAt, isNotNull);
+      verify(() => mockFirestore.runTransaction<UserModel>(any())).called(1);
     });
   });
 }
