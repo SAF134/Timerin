@@ -34,7 +34,7 @@
 | T-010 | Halaman Berlangganan (QRIS, email bukti, segarkan) (Selesai) | FR-015, 016 | DESIGN SCR-005 | status berubah setelah developer mengisi tanggal |
 | T-011 | Halaman Pengaturan (Selesai) | FR-017 | DESIGN SCR-006 | semua item berfungsi |
 | T-012 | Geser posisi overlay (Selesai) | FR-011 | DESIGN SCR-007 | posisi tersimpan |
-| T-013 | Tes Firestore rules (emulator) + unit test | NFR-005 | TECH §6,9 | rules tolak ubah langganan, tolak trial ganda, read config publik |
+| T-013 | Tes Firestore rules (emulator) + unit test (Selesai) | NFR-005 | TECH §6,9 | rules tolak ubah langganan, tolak trial ganda, read config publik |
 | T-014 | Uji perangkat (≥ 3 merek), tips baterai, optimasi CPU/RAM | NFR-002, 003 | PRD §5 | target NFR tercapai |
 | T-015 | Review keamanan & checklist Play Protect | NFR-005 | SECURITY | semua checklist tercentang |
 | T-016 | Kebijakan Privasi, aset rilis, signing, build APK, unggah ke Drive + SHA-256 | n/a | SECURITY §3,5 | APK terpasang dari Drive & lolos uji pemasangan |

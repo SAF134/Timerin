@@ -1,0 +1,9 @@
+{
+  "name": "timerin",
+  "private": true,
+  "description": "Timerin Firestore Security Rules Tests",
+  "type": "module",
+  "scripts": {
+    "test:rules": "firebase emulators:exec --only firestore \"node --test test/rules/firestore_rules.test.mjs\""
+  }
+}

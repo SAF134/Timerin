@@ -166,5 +166,94 @@ void main() {
       expect(user.trialStartedAt, isNotNull);
       verify(() => mockFirestore.runTransaction<UserModel>(any())).called(1);
     });
+
+    test(
+      'startTrial throws StateError if trial was already started (anti-reset)',
+      () async {
+        when(() => mockFirestore.runTransaction<UserModel>(any())).thenAnswer((
+          invocation,
+        ) async {
+          final tx =
+              invocation.positionalArguments[0]
+                  as Future<UserModel> Function(Transaction);
+          final mockTx = MockTransaction();
+          when(
+            () => mockTx.get(mockDocRef),
+          ).thenAnswer((_) async => mockSnapshot);
+          when(() => mockSnapshot.exists).thenReturn(true);
+          when(() => mockSnapshot.data()).thenReturn(<String, dynamic>{
+            'email': 'pemain@mlbb.com',
+            'displayName': 'Pemain',
+            'trialStartedAt': Timestamp.now(),
+          });
+          return tx(mockTx);
+        });
+
+        expect(
+          () => repository.startTrial('user_123'),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
+
+    test(
+      'startTrial throws StateError if user document does not exist',
+      () async {
+        when(() => mockFirestore.runTransaction<UserModel>(any())).thenAnswer((
+          invocation,
+        ) async {
+          final tx =
+              invocation.positionalArguments[0]
+                  as Future<UserModel> Function(Transaction);
+          final mockTx = MockTransaction();
+          when(
+            () => mockTx.get(mockDocRef),
+          ).thenAnswer((_) async => mockSnapshot);
+          when(() => mockSnapshot.exists).thenReturn(false);
+          when(() => mockSnapshot.data()).thenReturn(null);
+          return tx(mockTx);
+        });
+
+        expect(
+          () => repository.startTrial('non_existent_uid'),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
+
+    test('requestAccountDeletion writes deleteRequestedAt', () async {
+      when(
+        () => mockDocRef.update(any<Map<String, dynamic>>()),
+      ).thenAnswer((_) async {});
+
+      await repository.requestAccountDeletion('user_123');
+
+      verify(
+        () => mockDocRef.update(
+          any<Map<String, dynamic>>(
+            that: containsPair('deleteRequestedAt', isA<FieldValue>()),
+          ),
+        ),
+      ).called(1);
+    });
+
+    test('watchUser emits UserModel stream on snapshots', () async {
+      when(() => mockDocRef.snapshots()).thenAnswer((_) {
+        when(() => mockSnapshot.exists).thenReturn(true);
+        when(() => mockSnapshot.id).thenReturn('user_123');
+        when(() => mockSnapshot.data()).thenReturn(<String, dynamic>{
+          'email': 'stream@mlbb.com',
+          'displayName': 'Stream Player',
+        });
+        return Stream.value(mockSnapshot);
+      });
+
+      final stream = repository.watchUser('user_123');
+      final emittedUser = await stream.first;
+
+      expect(emittedUser, isNotNull);
+      expect(emittedUser!.uid, 'user_123');
+      expect(emittedUser.email, 'stream@mlbb.com');
+    });
   });
 }
