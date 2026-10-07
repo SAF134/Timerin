@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:timerin/core/services/app_update_service.dart';
 import 'package:timerin/core/services/url_launcher_service.dart';
 import 'package:timerin/core/theme/app_theme.dart';
 import 'package:timerin/data/models/user_model.dart';
@@ -26,6 +27,8 @@ class MockOverlayPermissionService extends Mock
 
 class MockUrlLauncherService extends Mock implements UrlLauncherService {}
 
+class MockAppUpdateService extends Mock implements AppUpdateService {}
+
 class FakeAccessNotifier extends AccessNotifier {
   FakeAccessNotifier(this._initialState);
 
@@ -41,6 +44,7 @@ void main() {
   late MockUserRepository mockUserRepo;
   late MockOverlayPermissionService mockPermissionService;
   late MockUrlLauncherService mockLauncherService;
+  late MockAppUpdateService mockUpdateService;
 
   final testDate = DateTime(2026, 11, 20, 15, 30);
   final testUserModel = UserModel(
@@ -56,6 +60,7 @@ void main() {
     mockUserRepo = MockUserRepository();
     mockPermissionService = MockOverlayPermissionService();
     mockLauncherService = MockUrlLauncherService();
+    mockUpdateService = MockAppUpdateService();
 
     when(() => mockUser.uid).thenReturn('user_settings_123');
     when(() => mockUser.email).thenReturn('settings_user@example.com');
@@ -71,6 +76,13 @@ void main() {
     when(
       () => mockUserRepo.requestAccountDeletion(any()),
     ).thenAnswer((_) async {});
+    when(() => mockUpdateService.checkUpdate()).thenAnswer(
+      (_) async => const AppUpdateInfo(
+        type: AppUpdateType.upToDate,
+        currentVersionCode: 1,
+        currentVersionName: '1.0.0',
+      ),
+    );
   });
 
   Widget createWidgetUnderTest({
@@ -88,6 +100,7 @@ void main() {
           mockPermissionService,
         ),
         urlLauncherServiceProvider.overrideWithValue(mockLauncherService),
+        appUpdateServiceProvider.overrideWithValue(mockUpdateService),
         currentUserModelProvider.overrideWith(
           (ref) => Stream.value(userModel ?? testUserModel),
         ),
@@ -262,6 +275,55 @@ void main() {
           find.text('Permintaan hapus akun telah dikirimkan ke pengembang.'),
           findsOneWidget,
         );
+      },
+    );
+
+    testWidgets(
+      'tapping Periksa Pembaruan shows snackbar when app is up to date',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
+
+        final checkUpdateTile = find.byKey(const Key('check_update_tile'));
+        await tester.ensureVisible(checkUpdateTile);
+        await tester.pumpAndSettle();
+        await tester.tap(checkUpdateTile);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Aplikasi sudah dalam versi terbaru (v1.0.0).'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'tapping Periksa Pembaruan opens AppUpdateDialog when new version is available',
+      (WidgetTester tester) async {
+        when(() => mockUpdateService.checkUpdate()).thenAnswer(
+          (_) async => const AppUpdateInfo(
+            type: AppUpdateType.optional,
+            currentVersionCode: 1,
+            currentVersionName: '1.0.0',
+            latestVersionCode: 2,
+            latestVersionName: '1.1.0',
+            minVersionCode: 1,
+            downloadUrl: 'https://drive.google.com/apk-v2',
+            releaseNotes: 'Fitur baru!',
+          ),
+        );
+
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
+
+        final checkUpdateTile = find.byKey(const Key('check_update_tile'));
+        await tester.ensureVisible(checkUpdateTile);
+        await tester.pumpAndSettle();
+        await tester.tap(checkUpdateTile);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Pembaruan Aplikasi Tersedia'), findsOneWidget);
+        expect(find.text('Fitur baru!'), findsOneWidget);
       },
     );
   });

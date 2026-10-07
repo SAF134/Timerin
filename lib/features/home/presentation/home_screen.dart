@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:timerin/core/services/app_update_service.dart';
 import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
 import 'package:timerin/core/theme/app_spacing.dart';
 import 'package:timerin/core/theme/app_typography.dart';
+import 'package:timerin/core/widgets/app_update_dialog.dart';
 import 'package:timerin/data/repositories/timer_settings_repository.dart';
 import 'package:timerin/features/auth/presentation/login_screen.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
@@ -37,7 +39,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(accessStateProvider.notifier).refreshAccess();
+      _checkOptionalUpdate();
     });
+  }
+
+  Future<void> _checkOptionalUpdate() async {
+    try {
+      final updateService = ref.read(appUpdateServiceProvider);
+      final updateInfo = await updateService.checkUpdate();
+      if (!mounted) return;
+      if (updateInfo.hasUpdate) {
+        await AppUpdateDialog.show(context, updateInfo);
+      }
+    } catch (_) {
+      // Abaikan jika offline / gagal koneksi
+    }
   }
 
   void _navigateToSubscription() {

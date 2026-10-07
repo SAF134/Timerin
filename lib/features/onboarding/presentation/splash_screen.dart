@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:timerin/core/services/app_update_service.dart';
 import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
 import 'package:timerin/core/theme/app_spacing.dart';
 import 'package:timerin/core/theme/app_typography.dart';
+import 'package:timerin/core/widgets/app_update_dialog.dart';
 import 'package:timerin/data/repositories/onboarding_repository.dart';
 import 'package:timerin/features/auth/presentation/login_screen.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
@@ -41,6 +43,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _handleNavigation() async {
+    // 1. Cek pembaruan wajib (force update) sebelum routing
+    final updateService = ref.read(appUpdateServiceProvider);
+    final updateInfo = await updateService.checkUpdate();
+    if (updateInfo.isForceUpdate && mounted) {
+      await AppUpdateDialog.show(context, updateInfo);
+      return;
+    }
+
     final authUser = ref.read(authServiceProvider).currentUser;
     final hasSeenOnboarding = ref
         .read(onboardingRepositoryProvider)

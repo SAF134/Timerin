@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:timerin/core/constants/app_constants.dart';
+import 'package:timerin/core/services/app_update_service.dart';
 import 'package:timerin/core/services/url_launcher_service.dart';
 import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
 import 'package:timerin/core/theme/app_spacing.dart';
 import 'package:timerin/core/theme/app_typography.dart';
+import 'package:timerin/core/widgets/app_update_dialog.dart';
 import 'package:timerin/data/models/user_model.dart';
 import 'package:timerin/data/repositories/user_repository.dart';
 import 'package:timerin/features/auth/presentation/login_screen.dart';
@@ -28,7 +31,7 @@ import 'package:timerin/features/subscription/services/access_service.dart';
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
-  static const String appVersion = '1.0.0 (Build 1)';
+  static const String appVersion = AppConstants.currentAppVersionFormatted;
   static const String privacyPolicyUrl = 'https://timerin.com/privacy';
 
   @override
@@ -39,6 +42,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     with WidgetsBindingObserver {
   bool _isPermissionGranted = false;
   bool _isLoadingPermission = true;
+  bool _isCheckingUpdate = false;
 
   @override
   void initState() {
@@ -701,6 +705,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           const Divider(color: AppColors.border, height: 1.0),
           AppSpacing.gapH12,
           InkWell(
+            key: const Key('check_update_tile'),
+            onTap: _isCheckingUpdate ? null : _checkAppUpdate,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                const Text('Periksa Pembaruan', style: AppTypography.body14),
+                if (_isCheckingUpdate)
+                  const SizedBox(
+                    width: 14.0,
+                    height: 14.0,
+                    child: CircularProgressIndicator(strokeWidth: 2.0),
+                  )
+                else
+                  const Row(
+                    children: <Widget>[
+                      Text('Cek Versi', style: AppTypography.caption12),
+                      AppSpacing.gapW4,
+                      Icon(
+                        Icons.refresh_rounded,
+                        size: 16.0,
+                        color: AppColors.textMuted,
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          AppSpacing.gapH12,
+          const Divider(color: AppColors.border, height: 1.0),
+          AppSpacing.gapH12,
+          InkWell(
             key: const Key('privacy_policy_tile'),
             onTap: _showPrivacyPolicyDialog,
             child: const Row(
@@ -718,5 +753,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _checkAppUpdate() async {
+    setState(() => _isCheckingUpdate = true);
+    AppUpdateInfo? info;
+    try {
+      final updateService = ref.read(appUpdateServiceProvider);
+      info = await updateService.checkUpdate();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Gagal memeriksa pembaruan. Periksa koneksi internet.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCheckingUpdate = false);
+    }
+
+    if (!mounted || info == null) return;
+    if (info.hasUpdate) {
+      await AppUpdateDialog.show(context, info);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Aplikasi sudah dalam versi terbaru (v${AppConstants.currentVersionName}).',
+          ),
+        ),
+      );
+    }
   }
 }

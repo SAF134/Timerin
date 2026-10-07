@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timerin/core/services/app_update_service.dart';
 import 'package:timerin/core/theme/app_theme.dart';
 import 'package:timerin/data/models/timer_settings_model.dart';
 import 'package:timerin/data/models/user_model.dart';
@@ -29,6 +30,8 @@ class MockOverlayPermissionService extends Mock
 
 class MockOverlayServiceController extends Mock
     implements OverlayServiceController {}
+
+class MockAppUpdateService extends Mock implements AppUpdateService {}
 
 class FakeAccessNotifier extends AccessNotifier {
   FakeAccessNotifier(this._initialState);
@@ -61,6 +64,7 @@ void main() {
   late MockUser mockUser;
   late MockOverlayPermissionService mockPermissionService;
   late MockOverlayServiceController mockOverlayController;
+  late MockAppUpdateService mockUpdateService;
   late SharedPreferences prefs;
 
   const testUserModel = UserModel(
@@ -74,6 +78,7 @@ void main() {
     mockUser = MockUser();
     mockPermissionService = MockOverlayPermissionService();
     mockOverlayController = MockOverlayServiceController();
+    mockUpdateService = MockAppUpdateService();
 
     SharedPreferences.setMockInitialValues(<String, Object>{});
     prefs = await SharedPreferences.getInstance();
@@ -87,6 +92,13 @@ void main() {
     when(
       () => mockPermissionService.isOverlayPermissionGranted(),
     ).thenAnswer((_) async => true);
+    when(() => mockUpdateService.checkUpdate()).thenAnswer(
+      (_) async => const AppUpdateInfo(
+        type: AppUpdateType.upToDate,
+        currentVersionCode: 1,
+        currentVersionName: '1.0.0',
+      ),
+    );
   });
 
   Widget createWidgetUnderTest({
@@ -95,8 +107,14 @@ void main() {
       remainingAccess: Duration(hours: 20),
     ),
     FakeAccessNotifier? customNotifier,
+    AppUpdateInfo? updateInfo,
   }) {
     final notifier = customNotifier ?? FakeAccessNotifier(accessState);
+    if (updateInfo != null) {
+      when(
+        () => mockUpdateService.checkUpdate(),
+      ).thenAnswer((_) async => updateInfo);
+    }
 
     return ProviderScope(
       overrides: [
@@ -111,6 +129,7 @@ void main() {
         overlayServiceControllerProvider.overrideWithValue(
           mockOverlayController,
         ),
+        appUpdateServiceProvider.overrideWithValue(mockUpdateService),
         accessStateProvider.overrideWith(() => notifier),
       ],
       child: MaterialApp(theme: AppTheme.theme, home: const HomeScreen()),
@@ -396,6 +415,30 @@ void main() {
         verify(() => mockAuthService.signOut()).called(1);
         expect(find.byType(LoginScreen), findsOneWidget);
       });
+
+      testWidgets(
+        'shows AppUpdateDialog when new update is available on home load',
+        (WidgetTester tester) async {
+          const updateInfo = AppUpdateInfo(
+            type: AppUpdateType.optional,
+            currentVersionCode: 1,
+            currentVersionName: '1.0.0',
+            latestVersionCode: 2,
+            latestVersionName: '1.1.0',
+            minVersionCode: 1,
+            downloadUrl: 'https://drive.google.com/apk-v2',
+            releaseNotes: 'Fitur baru!',
+          );
+
+          await tester.pumpWidget(
+            createWidgetUnderTest(updateInfo: updateInfo),
+          );
+          await tester.pumpAndSettle();
+
+          expect(find.text('Pembaruan Aplikasi Tersedia'), findsOneWidget);
+          expect(find.text('Fitur baru!'), findsOneWidget);
+        },
+      );
     },
   );
 }

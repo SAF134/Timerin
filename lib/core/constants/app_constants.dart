@@ -14,4 +14,13 @@ abstract final class AppConstants {
 
   /// Estimasi waktu maksimal aktivasi langganan manual oleh pengembang.
   static const String activationEstimatedTime = '1x24 jam';
+
+  /// Nomor versi rilis aplikasi saat ini (versionName).
+  static const String currentVersionName = '1.0.0';
+
+  /// Kode versi rilis aplikasi saat ini (versionCode).
+  static const int currentVersionCode = 1;
+
+  /// Label lengkap versi aplikasi untuk tampilan UI (SCR-006).
+  static const String currentAppVersionFormatted = '1.0.0 (Build 1)';
 }
