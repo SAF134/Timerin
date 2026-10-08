@@ -49,14 +49,7 @@ void main() {
       expect(find.text('Timer 3'), findsOneWidget);
       expect(find.text('Timer 4'), findsNothing);
 
-      final posFinder = find.text('Posisi Overlay');
-      await tester.ensureVisible(posFinder);
-      expect(posFinder, findsOneWidget);
-      expect(find.text('Bawaan (Kiri-Tengah)'), findsOneWidget);
-      expect(
-        find.byKey(const Key('reset_overlay_position_button')),
-        findsNothing,
-      );
+      expect(find.text('Posisi Overlay'), findsNothing);
     });
 
     testWidgets('tapping timer count chip 4 updates count to 4 timers', (
@@ -110,12 +103,15 @@ void main() {
       final sliderFinder = find.byKey(const Key('scale_slider'));
       expect(sliderFinder, findsOneWidget);
 
-      // Slide towards right
-      await tester.drag(sliderFinder, const Offset(50.0, 0.0));
+      await tester.ensureVisible(sliderFinder);
+      await tester.pumpAndSettle();
+
+      // Slide towards left (since default is 100% / 1.0)
+      await tester.drag(sliderFinder, const Offset(-100.0, 0.0));
       await tester.pumpAndSettle();
 
       final repo = TimerSettingsRepository(prefs: prefs);
-      expect(repo.getSettings().scale, isNot(1.0));
+      expect(repo.getSettings().scale, lessThan(1.0));
     });
 
     testWidgets('custom duration dialog allows updating duration to 5..600s', (
@@ -129,11 +125,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap custom option
-      await tester.tap(find.text('Kustom (5–600 dtk)...'));
+      await tester.tap(find.text('Kustom'));
       await tester.pumpAndSettle();
 
       // Dialog opens
       expect(find.text('Durasi Timer 1'), findsOneWidget);
+      expect(find.text('Batal'), findsOneWidget);
+      expect(find.text('Simpan'), findsOneWidget);
       expect(find.byType(Slider), findsWidgets);
 
       // Tap Simpan
@@ -144,35 +142,79 @@ void main() {
       expect(find.text('Durasi Timer 1'), findsNothing);
     });
 
-    testWidgets(
-      'displays custom position and resets position when button tapped',
-      (WidgetTester tester) async {
-        final repo = TimerSettingsRepository(prefs: prefs);
-        await repo.savePosition(150.0, 300.0);
+    testWidgets('Posisi Overlay section is not rendered on UI (Item 11)', (
+      WidgetTester tester,
+    ) async {
+      final repo = TimerSettingsRepository(prefs: prefs);
+      await repo.savePosition(150.0, 300.0);
 
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Posisi Overlay'), findsNothing);
+      expect(
+        find.byKey(const Key('reset_overlay_position_button')),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+      'when isLocked is true, shows lock banner and ignores interaction',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+            child: MaterialApp(
+              theme: AppTheme.theme,
+              home: const Scaffold(
+                body: SingleChildScrollView(
+                  child: TimerSettingsCard(isLocked: true),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key('overlay_settings_locked_banner')),
+          findsOneWidget,
+        );
+        expect(
+          find.text(
+            'Pengaturan dikunci saat overlay aktif. Matikan overlay untuk mengubah pengaturan.',
+          ),
+          findsOneWidget,
+        );
+
+        // Attempt to tap chip 5 - should be ignored
+        await tester.tap(find.byKey(const Key('timer_count_chip_5')));
+        await tester.pumpAndSettle();
+
+        final repo = TimerSettingsRepository(prefs: prefs);
+        expect(repo.getSettings().timerCount, 3); // untouched
+      },
+    );
+
+    testWidgets(
+      'toggling vibration switch updates isVibrationEnabled in repository',
+      (WidgetTester tester) async {
         await tester.pumpWidget(createWidgetUnderTest());
         await tester.pumpAndSettle();
 
-        final resetButtonFinder = find.byKey(
-          const Key('reset_overlay_position_button'),
-        );
-        await tester.ensureVisible(resetButtonFinder);
+        expect(find.text('Getar Saat Timer Habis'), findsOneWidget);
+        expect(find.text('Panduan Ketukan Overlay'), findsOneWidget);
+
+        final switchFinder = find.byKey(const Key('vibration_switch'));
+        expect(switchFinder, findsOneWidget);
+
+        await tester.ensureVisible(switchFinder);
+        await tester.pumpAndSettle();
+        await tester.tap(switchFinder);
         await tester.pumpAndSettle();
 
-        expect(find.text('Posisi Overlay'), findsOneWidget);
-        expect(find.text('Tersimpan (X: 150 dp, Y: 300 dp)'), findsOneWidget);
-        expect(resetButtonFinder, findsOneWidget);
-
-        await tester.tap(resetButtonFinder);
-        await tester.pumpAndSettle();
-
-        expect(find.text('Bawaan (Kiri-Tengah)'), findsOneWidget);
-        expect(
-          find.byKey(const Key('reset_overlay_position_button')),
-          findsNothing,
-        );
-
-        expect(repo.getSettings().hasCustomPosition, isFalse);
+        final repo = TimerSettingsRepository(prefs: prefs);
+        expect(repo.getSettings().isVibrationEnabled, isFalse);
       },
     );
   });

@@ -76,12 +76,55 @@ void main() {
         );
 
         await tester.tap(find.byType(OverlayTimerBubble));
-        await tester.pump();
+        // Tunggu debounce double tap recognizer (300ms)
+        await tester.pump(const Duration(milliseconds: 300));
 
         expect(tapCalled, isTrue);
         expect(countdown.isRunning, isTrue);
         expect(find.text('30'), findsOneWidget);
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+        countdown.dispose();
+      },
+    );
+
+    testWidgets(
+      'double tapping bubble resets countdown to beginning without running',
+      (tester) async {
+        final countdown = createTestCountdown(
+          duration: const Duration(seconds: 30),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(child: OverlayTimerBubble(countdown: countdown)),
+            ),
+          ),
+        );
+
+        // 1. Single tap untuk memulai
+        await tester.tap(find.byType(OverlayTimerBubble));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(countdown.isRunning, isTrue);
+
+        // 2. Berjalan selama 10 detik
+        fakeStopwatch.advance(10000);
+        activeTimer?.triggerTick();
+        await tester.pump();
+        expect(find.text('20'), findsOneWidget);
+
+        // 3. Double tap untuk reset
+        await tester.tap(find.byType(OverlayTimerBubble));
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.tap(find.byType(OverlayTimerBubble));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // Timer kembali ke awal (30) dan tidak berjalan (idle)
+        expect(countdown.status, TimerCountdownStatus.idle);
+        expect(countdown.isRunning, isFalse);
+        expect(find.text('30'), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
 
         countdown.dispose();
       },
@@ -105,7 +148,7 @@ void main() {
 
         // 1. Start countdown
         await tester.tap(find.byType(OverlayTimerBubble));
-        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
         expect(find.text('10'), findsOneWidget);
 
         // 2. Advance time to 4s remaining (running)
@@ -127,12 +170,12 @@ void main() {
         await tester.pump();
         expect(countdown.isFinished, isTrue);
 
-        // Indikator visual selesai: check icon
-        expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+        // Indikator visual selesai: angka 0 berwarna hijau accent
+        expect(find.text('0'), findsOneWidget);
 
         // 5. Tap again while finished -> restarts to full duration (10s)
         await tester.tap(find.byType(OverlayTimerBubble));
-        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
         expect(countdown.status, TimerCountdownStatus.running);
         expect(find.text('10'), findsOneWidget);
 
@@ -140,35 +183,49 @@ void main() {
       },
     );
 
-    testWidgets('tapping while running restarts countdown', (tester) async {
-      final countdown = createTestCountdown(
-        duration: const Duration(seconds: 20),
-      );
+    testWidgets(
+      'single tapping while running is ignored, double tapping resets to idle',
+      (tester) async {
+        final countdown = createTestCountdown(
+          duration: const Duration(seconds: 20),
+        );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(child: OverlayTimerBubble(countdown: countdown)),
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(child: OverlayTimerBubble(countdown: countdown)),
+            ),
           ),
-        ),
-      );
+        );
 
-      // Start
-      await tester.tap(find.byType(OverlayTimerBubble));
-      await tester.pump();
+        // Start
+        await tester.tap(find.byType(OverlayTimerBubble));
+        await tester.pump(const Duration(milliseconds: 300));
 
-      fakeStopwatch.advance(15000);
-      activeTimer?.triggerTick();
-      await tester.pump();
-      expect(find.text('5'), findsOneWidget);
+        fakeStopwatch.advance(15000);
+        activeTimer?.triggerTick();
+        await tester.pump();
+        expect(find.text('5'), findsOneWidget);
 
-      // Tap to restart
-      await tester.tap(find.byType(OverlayTimerBubble));
-      await tester.pump();
-      expect(find.text('20'), findsOneWidget);
+        // Single tap while running -> IGNORED (remains 5 and running)
+        await tester.tap(find.byType(OverlayTimerBubble));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.text('5'), findsOneWidget);
+        expect(countdown.isRunning, isTrue);
 
-      countdown.dispose();
-    });
+        // Double tap while running -> RESETS to initial duration (20) and stops (idle)
+        await tester.tap(find.byType(OverlayTimerBubble));
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.tap(find.byType(OverlayTimerBubble));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text('20'), findsOneWidget);
+        expect(countdown.status, TimerCountdownStatus.idle);
+        expect(countdown.isRunning, isFalse);
+
+        countdown.dispose();
+      },
+    );
 
     testWidgets('self-contained bubble without external countdown works', (
       tester,
@@ -185,8 +242,71 @@ void main() {
 
       expect(find.text('15'), findsOneWidget);
       await tester.tap(find.byType(OverlayTimerBubble));
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
+
+    testWidgets(
+      'when isInteractive is false, taps and double taps are ignored',
+      (tester) async {
+        final countdown = createTestCountdown(
+          duration: const Duration(seconds: 30),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: OverlayTimerBubble(
+                  countdown: countdown,
+                  isInteractive: false,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.byType(OverlayTimerBubble));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(countdown.isRunning, isFalse);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+
+        countdown.dispose();
+      },
+    );
+
+    testWidgets(
+      'updating initialDuration rebuilds internal countdown duration',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: OverlayTimerBubble(
+                  initialDuration: Duration(seconds: 30),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('30'), findsOneWidget);
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: OverlayTimerBubble(
+                  initialDuration: Duration(seconds: 60),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('60'), findsOneWidget);
+      },
+    );
   });
 }

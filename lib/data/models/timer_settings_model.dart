@@ -50,9 +50,13 @@ class TimerSettings {
     this.orientation = TimerOrientation.vertical,
     this.scale = 1.0,
     this.durations = const <int>[30, 60, 120, 180, 30],
+    this.isVibrationEnabled = true,
     this.positionX,
     this.positionY,
   });
+
+  /// Apakah getaran fisik diaktifkan saat timer selesai (default true).
+  final bool isVibrationEnabled;
 
   /// Jumlah timer aktif: 1–5 (FR-005, default 3 per SCR-004).
   final int timerCount;
@@ -63,7 +67,7 @@ class TimerSettings {
   /// Orientasi susunan: vertikal atau horizontal (FR-009).
   final TimerOrientation orientation;
 
-  /// Skala ukuran overlay: 50%–150% (0.5 – 1.5) (FR-008).
+  /// Skala ukuran overlay: 50%–100% (0.5 – 1.0) (FR-008).
   final double scale;
 
   /// Durasi masing-masing timer dalam detik (FR-007).
@@ -111,6 +115,7 @@ class TimerSettings {
     TimerOrientation? orientation,
     double? scale,
     List<int>? durations,
+    bool? isVibrationEnabled,
     double? positionX,
     double? positionY,
     bool clearPosition = false,
@@ -119,7 +124,7 @@ class TimerSettings {
       timerCount: (timerCount ?? this.timerCount).clamp(1, 5),
       timeFormat: timeFormat ?? this.timeFormat,
       orientation: orientation ?? this.orientation,
-      scale: (scale ?? this.scale).clamp(0.5, 1.5),
+      scale: (scale ?? this.scale).clamp(0.5, 1.0),
       durations: durations != null
           ? List<int>.unmodifiable(
               durations.map(
@@ -130,6 +135,7 @@ class TimerSettings {
               ),
             )
           : this.durations,
+      isVibrationEnabled: isVibrationEnabled ?? this.isVibrationEnabled,
       positionX: clearPosition ? null : (positionX ?? this.positionX),
       positionY: clearPosition ? null : (positionY ?? this.positionY),
     );
@@ -142,6 +148,7 @@ class TimerSettings {
       'orientation': orientation.name,
       'scale': scale,
       'durations': durations,
+      'isVibrationEnabled': isVibrationEnabled,
       'positionX': positionX,
       'positionY': positionY,
     };
@@ -159,6 +166,7 @@ class TimerSettings {
             ?.map((e) => (e as num).toInt())
             .toList() ??
         const <int>[30, 60, 120, 180, 30];
+    final rawVibration = (map['isVibrationEnabled'] as bool?) ?? true;
     final rawX = (map['positionX'] as num?)?.toDouble();
     final rawY = (map['positionY'] as num?)?.toDouble();
 
@@ -176,7 +184,7 @@ class TimerSettings {
       timerCount: rawCount.clamp(1, 5),
       timeFormat: timeFormat,
       orientation: orientation,
-      scale: rawScale.clamp(0.5, 1.5),
+      scale: rawScale.clamp(0.5, 1.0),
       durations: List<int>.unmodifiable(
         rawDurations.map(
           (d) => d.clamp(
@@ -185,6 +193,7 @@ class TimerSettings {
           ),
         ),
       ),
+      isVibrationEnabled: rawVibration,
       positionX: rawX,
       positionY: rawY,
     );
@@ -211,6 +220,7 @@ class TimerSettings {
         other.orientation == orientation &&
         other.scale == scale &&
         listEquals(other.durations, durations) &&
+        other.isVibrationEnabled == isVibrationEnabled &&
         other.positionX == positionX &&
         other.positionY == positionY;
   }
@@ -222,6 +232,7 @@ class TimerSettings {
     orientation,
     scale,
     Object.hashAll(durations),
+    isVibrationEnabled,
     positionX,
     positionY,
   );

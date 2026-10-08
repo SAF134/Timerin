@@ -40,6 +40,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('banner_subscribe_button')), findsNothing);
+      expect(find.text('Segarkan Status'), findsNothing);
     });
 
     testWidgets(
@@ -69,7 +70,7 @@ void main() {
 
         final button = find.byKey(const Key('banner_subscribe_button'));
         expect(button, findsOneWidget);
-        expect(find.text('Berlangganan Rp10.000/bln'), findsOneWidget);
+        expect(find.text('Perpanjang Langganan'), findsOneWidget);
 
         await tester.tap(button);
         await tester.pump();
@@ -91,9 +92,7 @@ void main() {
       expect(find.text('Status Berlangganan'), findsOneWidget);
       expect(find.text('Aktif (sisa 28 hari)'), findsOneWidget);
       expect(
-        find.text(
-          'Status Berlangganan: Aktif (sisa 28 hari). Terima kasih telah mendukung Timerin!',
-        ),
+        find.text('Status Berlangganan: Aktif (sisa 28 hari).'),
         findsOneWidget,
       );
       expect(find.byKey(const Key('banner_subscribe_button')), findsNothing);
@@ -115,7 +114,7 @@ void main() {
           ),
         );
 
-        expect(find.text('Masa Aktif Selesai'), findsOneWidget);
+        expect(find.text('Masa Aktif Habis'), findsOneWidget);
         expect(find.text('Habis'), findsOneWidget);
         expect(
           find.text(
@@ -126,7 +125,7 @@ void main() {
 
         final button = find.byKey(const Key('banner_subscribe_button'));
         expect(button, findsOneWidget);
-        expect(find.text('Berlangganan Sekarang'), findsOneWidget);
+        expect(find.text('Perpanjang Langganan'), findsOneWidget);
 
         await tester.tap(button);
         await tester.pump();

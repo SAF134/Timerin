@@ -59,6 +59,11 @@ class TimerSettingsNotifier extends Notifier<TimerSettings> {
     await updateSettings(state.copyWithDuration(index, seconds));
   }
 
+  /// Mengaktifkan atau menonaktifkan getaran fisik saat timer selesai.
+  Future<void> setVibrationEnabled(bool enabled) async {
+    await updateSettings(state.copyWith(isVibrationEnabled: enabled));
+  }
+
   /// Memperbarui koordinat posisi overlay yang digeser (FR-011, SCR-007).
   Future<void> setPosition(double x, double y) async {
     await updateSettings(state.copyWith(positionX: x, positionY: y));

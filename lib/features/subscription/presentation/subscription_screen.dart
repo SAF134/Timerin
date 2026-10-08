@@ -7,6 +7,7 @@ import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
 import 'package:timerin/core/theme/app_spacing.dart';
 import 'package:timerin/core/theme/app_typography.dart';
+import 'package:timerin/data/repositories/privacy_mode_repository.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
 import 'package:timerin/features/subscription/domain/access_state.dart';
 import 'package:timerin/features/subscription/services/access_service.dart';
@@ -61,16 +62,16 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     final launcherService = ref.read(urlLauncherServiceProvider);
     final subject = '${AppConstants.paymentEmailSubject} - $uid';
     final body =
-        '''Halo Developer Timerin,
+        '''Yth. Tim Pengembang Timerin,
 
-Saya telah melakukan pembayaran langganan Timerin sebesar Rp10.000 via QRIS.
-Berikut detail akun saya:
-- UID: $uid
-- Email: $email
+Konfirmasi pembayaran langganan Timerin via QRIS:
+- UID Akun: $uid
+- Email Akun: $email
+- Nominal: Rp10.000 (30 Hari)
 
-(Mohon lampirkan tangkapan layar/screenshot bukti transfer pada email ini)
+Bukti transfer telah dilampirkan pada email ini. Mohon verifikasi dan aktivasi akun saya.
 
-Terima kasih!''';
+Terima kasih.''';
 
     final success = await launcherService.launchEmail(
       recipient: AppConstants.developerSupportEmail,
@@ -98,6 +99,7 @@ Terima kasih!''';
                 const Text(
                   'Tidak dapat membuka aplikasi email otomatis. Silakan kirim email manual dengan informasi berikut:',
                   style: AppTypography.body14Muted,
+                  textAlign: TextAlign.justify,
                 ),
                 AppSpacing.gapH12,
                 SelectableText(
@@ -141,6 +143,7 @@ Terima kasih!''';
   Widget build(BuildContext context) {
     final authUser = ref.watch(authServiceProvider).currentUser;
     final accessState = ref.watch(accessStateProvider);
+    final isPrivacyMode = ref.watch(privacyModeProvider);
     final uid = authUser?.uid ?? 'unknown_uid';
     final email = authUser?.email ?? 'unknown_email';
 
@@ -170,7 +173,11 @@ Terima kasih!''';
               AppSpacing.gapH16,
 
               // 5. Info Akun Pengguna
-              _buildUserAccountCard(uid: uid, email: email),
+              _buildUserAccountCard(
+                uid: uid,
+                email: email,
+                isPrivacyMode: isPrivacyMode,
+              ),
               AppSpacing.gapH24,
 
               // 6. Tombol Aksi Utama
@@ -182,17 +189,28 @@ Terima kasih!''';
               ),
               AppSpacing.gapH12,
 
-              OutlinedButton.icon(
+              ElevatedButton.icon(
                 key: const Key('refresh_status_button'),
                 onPressed: _isRefreshing ? null : _handleRefreshStatus,
                 icon: _isRefreshing
                     ? const SizedBox(
                         width: 16.0,
                         height: 16.0,
-                        child: CircularProgressIndicator(strokeWidth: 2.0),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
+                          color: AppColors.textOnPrimary,
+                        ),
                       )
                     : const Icon(Icons.refresh_rounded),
                 label: const Text('Segarkan Status'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textOnPrimary,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadius.buttonRadius,
+                  ),
+                  elevation: 2.0,
+                ),
               ),
             ],
           ),
@@ -219,7 +237,7 @@ Terima kasih!''';
         statusColor = AppColors.accent;
         break;
       case AccessStatus.habis:
-        statusTitle = 'Masa Aktif Selesai';
+        statusTitle = 'Masa Aktif Habis';
         statusColor = AppColors.error;
         break;
     }
@@ -229,7 +247,14 @@ Terima kasih!''';
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: AppRadius.cardRadius,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.primary, width: 1.0),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 16.0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: <Widget>[
@@ -245,6 +270,7 @@ Terima kasih!''';
             child: Text(
               'Status: $statusTitle',
               style: AppTypography.body14.copyWith(
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: statusColor,
               ),
@@ -258,9 +284,17 @@ Terima kasih!''';
   Widget _buildPricingCard() {
     return Container(
       padding: AppSpacing.p24,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: AppRadius.cardRadius,
+        border: Border.all(color: AppColors.primary, width: 1.0),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.15),
+            blurRadius: 16.0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,6 +332,7 @@ Terima kasih!''';
             style: AppTypography.body14.copyWith(
               color: AppColors.textOnPrimary.withValues(alpha: 0.9),
             ),
+            textAlign: TextAlign.justify,
           ),
         ],
       ),
@@ -310,7 +345,14 @@ Terima kasih!''';
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: AppRadius.cardRadius,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.primary, width: 1.0),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 16.0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -324,23 +366,24 @@ Terima kasih!''';
             ],
           ),
           AppSpacing.gapH16,
-          // Gambar QRIS atau Placeholder visual
+          // Gambar QRIS Pembayaran (Diperbesar & Rapi)
           Container(
-            width: 220.0,
-            height: 220.0,
-            padding: AppSpacing.p12,
+            width: 290.0,
+            height: 290.0,
+            padding: const EdgeInsets.all(8.0),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: AppRadius.cardRadius,
-              border: Border.all(color: AppColors.border, width: 2.0),
+              border: Border.all(color: AppColors.primary, width: 1.5),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10.0,
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  blurRadius: 14.0,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
+            clipBehavior: Clip.antiAlias,
             child: Image.asset(
               'assets/images/qris.png',
               fit: BoxFit.contain,
@@ -349,14 +392,8 @@ Terima kasih!''';
               },
             ),
           ),
-          AppSpacing.gapH16,
-          Text(
-            'Mendukung GoPay, OVO, DANA, BCA, Mandiri, BRI, & Seluruh Bank QRIS',
-            style: AppTypography.caption12.copyWith(color: AppColors.textMuted),
-            textAlign: TextAlign.center,
-          ),
-          AppSpacing.gapH8,
-          OutlinedButton.icon(
+          AppSpacing.gapH12,
+          ElevatedButton.icon(
             key: const Key('copy_nominal_button'),
             onPressed: () {
               Clipboard.setData(const ClipboardData(text: '10000'));
@@ -368,10 +405,16 @@ Terima kasih!''';
             },
             icon: const Icon(Icons.copy_rounded, size: 16.0),
             label: const Text('Salin Nominal: 10.000'),
-            style: OutlinedButton.styleFrom(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textOnPrimary,
+              shape: const RoundedRectangleBorder(
+                borderRadius: AppRadius.buttonRadius,
+              ),
+              elevation: 2.0,
               padding: const EdgeInsets.symmetric(
-                horizontal: 14.0,
-                vertical: 6.0,
+                horizontal: 16.0,
+                vertical: 8.0,
               ),
             ),
           ),
@@ -381,27 +424,13 @@ Terima kasih!''';
   }
 
   Widget _buildQrisPlaceholder() {
-    return Column(
+    return const Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        const Icon(
+        Icon(
           Icons.qr_code_scanner_rounded,
           size: 72.0,
           color: AppColors.primary,
-        ),
-        AppSpacing.gapH8,
-        Text(
-          'TIMERIN QRIS',
-          style: AppTypography.body14.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColors.primary,
-          ),
-        ),
-        AppSpacing.gapH4,
-        const Text(
-          'Scan via e-Wallet / m-Banking',
-          style: AppTypography.caption12,
-          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -413,7 +442,14 @@ Terima kasih!''';
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: AppRadius.cardRadius,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.primary, width: 1.0),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 16.0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,18 +504,38 @@ Terima kasih!''';
           ),
         ),
         AppSpacing.gapW12,
-        Expanded(child: Text(text, style: AppTypography.body14)),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTypography.body14,
+            textAlign: TextAlign.justify,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildUserAccountCard({required String uid, required String email}) {
+  Widget _buildUserAccountCard({
+    required String uid,
+    required String email,
+    required bool isPrivacyMode,
+  }) {
+    final displayedEmail = isPrivacyMode ? '****' : email;
+    final displayedUid = isPrivacyMode ? 'UID: ****' : 'UID: $uid';
+
     return Container(
       padding: AppSpacing.p16,
       decoration: BoxDecoration(
         color: AppColors.surfaceVariant,
         borderRadius: AppRadius.cardRadius,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.primary, width: 1.0),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 16.0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -517,12 +573,12 @@ Terima kasih!''';
           ),
           AppSpacing.gapH8,
           Text(
-            email,
+            displayedEmail,
             style: AppTypography.body14.copyWith(fontWeight: FontWeight.w600),
           ),
           AppSpacing.gapH4,
           SelectableText(
-            'UID: $uid',
+            displayedUid,
             style: AppTypography.caption12.copyWith(fontFamily: 'monospace'),
           ),
         ],

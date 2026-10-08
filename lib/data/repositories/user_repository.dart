@@ -25,7 +25,9 @@ class UserRepository {
 
   /// Mengambil dokumen pengguna berdasarkan [uid].
   Future<UserModel?> getUser(String uid) async {
-    final snapshot = await _userDoc(uid).get();
+    final snapshot = await _userDoc(
+      uid,
+    ).get().timeout(const Duration(seconds: 4));
     if (!snapshot.exists || snapshot.data() == null) {
       return null;
     }
@@ -43,7 +45,7 @@ class UserRepository {
     required String displayName,
   }) async {
     final docRef = _userDoc(uid);
-    final snapshot = await docRef.get();
+    final snapshot = await docRef.get().timeout(const Duration(seconds: 4));
 
     if (snapshot.exists && snapshot.data() != null) {
       return UserModel.fromDocument(snapshot);
@@ -57,18 +59,20 @@ class UserRepository {
 
   /// Memperbarui timestamp aktivitas [lastSeenAt] dengan server timestamp.
   Future<void> updateLastSeen(String uid) async {
-    await _userDoc(
-      uid,
-    ).update(<String, dynamic>{'lastSeenAt': FieldValue.serverTimestamp()});
+    await _userDoc(uid)
+        .update(<String, dynamic>{'lastSeenAt': FieldValue.serverTimestamp()})
+        .timeout(const Duration(seconds: 4));
   }
 
   /// Memperbarui [lastSeenAt] dan mengambil timestamp server resmi (TECH §5 item 1).
   Future<DateTime> syncServerTime(String uid) async {
     final docRef = _userDoc(uid);
-    await docRef.update(<String, dynamic>{
-      'lastSeenAt': FieldValue.serverTimestamp(),
-    });
-    final snapshot = await docRef.get(const GetOptions(source: Source.server));
+    await docRef
+        .update(<String, dynamic>{'lastSeenAt': FieldValue.serverTimestamp()})
+        .timeout(const Duration(seconds: 4));
+    final snapshot = await docRef
+        .get(const GetOptions(source: Source.server))
+        .timeout(const Duration(seconds: 4));
     final data = snapshot.data();
     if (data != null && data['lastSeenAt'] is Timestamp) {
       return (data['lastSeenAt'] as Timestamp).toDate();

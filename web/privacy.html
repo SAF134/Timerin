@@ -1,221 +1,299 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kebijakan Privasi - Timerin</title>
-  <style>
-    :root {
-      --bg-primary: #09090B;
-      --bg-surface: #18181B;
-      --border-color: #27272A;
-      --text-primary: #F4F4F5;
-      --text-muted: #A1A1AA;
-      --accent-color: #14B8A6;
-      --accent-glow: rgba(20, 184, 166, 0.15);
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kebijakan Privasi - Timerin</title>
+    <style>
+      :root {
+        --bg-primary: #09090b;
+        --bg-surface: #18181b;
+        --border-color: #27272a;
+        --text-primary: #f4f4f5;
+        --text-muted: #a1a1aa;
+        --accent-color: #14b8a6;
+        --accent-glow: rgba(20, 184, 166, 0.15);
+        --font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+      }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      background-color: var(--bg-primary);
-      color: var(--text-primary);
-      font-family: var(--font-family);
-      line-height: 1.6;
-      padding: 24px 16px;
-    }
+      body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: var(--font-family);
+        line-height: 1.6;
+        padding: 24px 16px;
+      }
 
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 32px 24px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-    }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 32px 24px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      }
 
-    header {
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 20px;
-      margin-bottom: 28px;
-    }
+      header {
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 20px;
+        margin-bottom: 28px;
+      }
 
-    .brand-badge {
-      display: inline-block;
-      background: var(--accent-glow);
-      color: var(--accent-color);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 9999px;
-      border: 1px solid var(--accent-color);
-      margin-bottom: 12px;
-    }
+      .brand-badge {
+        display: inline-block;
+        background: var(--accent-glow);
+        color: var(--accent-color);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        border: 1px solid var(--accent-color);
+        margin-bottom: 12px;
+      }
 
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-    }
+      h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
 
-    .meta-info {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
+      .meta-info {
+        font-size: 14px;
+        color: var(--text-muted);
+      }
 
-    h2 {
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-top: 28px;
-      margin-bottom: 12px;
-      border-left: 3px solid var(--accent-color);
-      padding-left: 10px;
-    }
+      h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-top: 28px;
+        margin-bottom: 12px;
+        border-left: 3px solid var(--accent-color);
+        padding-left: 10px;
+      }
 
-    h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--accent-color);
-      margin-top: 16px;
-      margin-bottom: 8px;
-    }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--accent-color);
+        margin-top: 16px;
+        margin-bottom: 8px;
+      }
 
-    p {
-      color: #D4D4D8;
-      font-size: 15px;
-      margin-bottom: 14px;
-    }
+      p {
+        color: #d4d4d8;
+        font-size: 15px;
+        margin-bottom: 14px;
+      }
 
-    ul, ol {
-      margin-left: 20px;
-      margin-bottom: 16px;
-      color: #D4D4D8;
-      font-size: 15px;
-    }
+      ul,
+      ol {
+        margin-left: 20px;
+        margin-bottom: 16px;
+        color: #d4d4d8;
+        font-size: 15px;
+      }
 
-    li {
-      margin-bottom: 6px;
-    }
+      li {
+        margin-bottom: 6px;
+      }
 
-    .callout {
-      background: #1F2937;
-      border: 1px solid #374151;
-      border-left: 4px solid var(--accent-color);
-      border-radius: 8px;
-      padding: 16px;
-      margin: 18px 0;
-    }
+      .callout {
+        background: #1f2937;
+        border: 1px solid #374151;
+        border-left: 4px solid var(--accent-color);
+        border-radius: 8px;
+        padding: 16px;
+        margin: 18px 0;
+      }
 
-    .callout p {
-      margin-bottom: 0;
-      font-size: 14px;
-    }
+      .callout p {
+        margin-bottom: 0;
+        font-size: 14px;
+      }
 
-    a {
-      color: var(--accent-color);
-      text-decoration: none;
-    }
+      a {
+        color: var(--accent-color);
+        text-decoration: none;
+      }
 
-    a:hover {
-      text-decoration: underline;
-    }
+      a:hover {
+        text-decoration: underline;
+      }
 
-    footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-color);
-      text-align: center;
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <div class="brand-badge">Timerin &bull; Privasi &amp; Keamanan Data</div>
-      <h1>Kebijakan Privasi Timerin</h1>
-      <div class="meta-info">
-        Berlaku Efektif: 8 Oktober 2026 &bull; Sesuai UU No. 27 Tahun 2022 (UU PDP)
-      </div>
-    </header>
+      footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+        text-align: center;
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="brand-badge">
+          Timerin &bull; Privasi &amp; Keamanan Data
+        </div>
+        <h1>Kebijakan Privasi Timerin</h1>
+        <div class="meta-info">
+          Berlaku Efektif: 8 Oktober 2026 &bull; Sesuai UU No. 27 Tahun 2022 (UU
+          PDP)
+        </div>
+      </header>
 
-    <main>
-      <h2>1. Pendahuluan</h2>
-      <p>
-        Selamat datang di <strong>Timerin</strong>. Kami berkomitmen penuh untuk menghormati dan melindungi privasi serta data pribadi setiap pengguna. Dokumen ini menjelaskan bagaimana kami mengumpulkan, menggunakan, menyimpan, dan melindungi informasi pribadi Anda sesuai dengan ketentuan perundang-undangan Republik Indonesia, khususnya <strong>Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP)</strong>.
-      </p>
+      <main>
+        <h2>1. Pendahuluan</h2>
+        <p>
+          Selamat datang di <strong>Timerin</strong>. Kami berkomitmen penuh
+          untuk menghormati dan melindungi privasi serta data pribadi setiap
+          pengguna. Dokumen ini menjelaskan bagaimana kami mengumpulkan,
+          menggunakan, menyimpan, dan melindungi informasi pribadi Anda sesuai
+          dengan ketentuan perundang-undangan Republik Indonesia, khususnya
+          <strong
+            >Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi
+            (UU PDP)</strong
+          >.
+        </p>
 
-      <h2>2. Data Pribadi yang Kami Kumpulkan</h2>
-      <p>Kami menerapkan asas minimalisasi data, hanya mengumpulkan data yang mutlak diperlukan untuk operasional fitur aplikasi:</p>
-      
-      <h3>A. Data Akun Google (Otentikasi)</h3>
-      <ul>
-        <li><strong>Alamat Email:</strong> Pengidentifikasi unik akun pengguna serta sarana konfirmasi mutasi langganan.</li>
-        <li><strong>Nama Tampilan (Display Name):</strong> Menampilkan sapaan pada profil pengguna di antarmuka aplikasi.</li>
-        <li><strong>UID Firebase:</strong> Kunci unik acak dari sistem Firebase Authentication untuk verifikasi hak akses langganan.</li>
-      </ul>
+        <h2>2. Data Pribadi yang Kami Kumpulkan</h2>
+        <p>
+          Kami menerapkan asas minimalisasi data, hanya mengumpulkan data yang
+          mutlak diperlukan untuk operasional fitur aplikasi:
+        </p>
 
-      <h3>B. Data Status Langganan &amp; Akses</h3>
-      <ul>
-        <li><strong>Waktu Mulai Trial (trialStartedAt):</strong> Timestamp server saat masa uji coba 24 jam diaktifkan.</li>
-        <li><strong>Waktu Berakhir Langganan (subscriptionEndsAt):</strong> Timestamp server masa aktif paket langganan Rp10.000/bulan.</li>
-        <li><strong>Timestamp Sinkronisasi (lastSeenAt):</strong> Validasi integritas waktu terhadap waktu server cloud.</li>
-        <li><strong>Status Penghapusan Akun (deleteRequestedAt):</strong> Catatan jika Anda mengajukan permohonan hapus akun.</li>
-      </ul>
+        <h3>A. Data Akun Google (Otentikasi)</h3>
+        <ul>
+          <li>
+            <strong>Alamat Email:</strong> Pengidentifikasi unik akun pengguna
+            serta sarana konfirmasi mutasi langganan.
+          </li>
+          <li>
+            <strong>Nama Tampilan (Display Name):</strong> Menampilkan sapaan
+            pada profil pengguna di antarmuka aplikasi.
+          </li>
+          <li>
+            <strong>UID Firebase:</strong> Kunci unik acak dari sistem Firebase
+            Authentication untuk verifikasi hak akses langganan.
+          </li>
+        </ul>
 
-      <h3>C. Data Diagnostik (Crash Reports)</h3>
-      <p>
-        Melalui Firebase Crashlytics, kami menerima laporan teknis anonim berupa <em>stack trace</em> dan model perangkat keras saat terjadi kegagalan sistem. <strong>Laporan ini sama sekali tidak memuat email, UID, nama, atau token identitas Anda.</strong>
-      </p>
+        <h3>B. Data Status Langganan &amp; Akses</h3>
+        <ul>
+          <li>
+            <strong>Waktu Mulai Trial (trialStartedAt):</strong> Timestamp
+            server saat masa uji coba 24 jam diaktifkan.
+          </li>
+          <li>
+            <strong>Waktu Berakhir Langganan (subscriptionEndsAt):</strong>
+            Timestamp server masa aktif paket langganan Rp10.000/bulan.
+          </li>
+          <li>
+            <strong>Timestamp Sinkronisasi (lastSeenAt):</strong> Validasi
+            integritas waktu terhadap waktu server cloud.
+          </li>
+          <li>
+            <strong>Status Penghapusan Akun (deleteRequestedAt):</strong>
+            Catatan jika Anda mengajukan permohonan hapus akun.
+          </li>
+        </ul>
 
-      <div class="callout">
-        <p><strong>Komitmen Tanpa Pengintaian Layar:</strong> Timerin TIDAK menggunakan AccessibilityService, TIDAK merekam layar (MediaProjection), TIDAK membaca memori permainan Mobile Legends, dan TIDAK meminta izin kontak, SMS, atau berkas pribadi Anda.</p>
-      </div>
+        <h3>C. Data Diagnostik (Crash Reports)</h3>
+        <p>
+          Melalui Firebase Crashlytics, kami menerima laporan teknis anonim
+          berupa <em>stack trace</em> dan model perangkat keras saat terjadi
+          kegagalan sistem.
+          <strong
+            >Laporan ini sama sekali tidak memuat email, UID, nama, atau token
+            identitas Anda.</strong
+          >
+        </p>
 
-      <h2>3. Tujuan Pemrosesan Data Pribadi</h2>
-      <ol>
-        <li>Menyediakan fungsionalitas floating timer overlay cooldown spell Mobile Legends.</li>
-        <li>Memvalidasi status masa trial 24 jam gratis dan langganan aktif bulanan.</li>
-        <li>Mencegah manipulasi waktu lokal perangkat dengan mengacu pada jam server Firebase.</li>
-        <li>Memverifikasi bukti transfer QRIS manual melalui email konfirmasi.</li>
-        <li>Memberitahukan ketersediaan pembaruan versi resmi aplikasi.</li>
-      </ol>
+        <div class="callout">
+          <p>
+            <strong>Komitmen Tanpa Pengintaian Layar:</strong> Timerin TIDAK
+            menggunakan AccessibilityService, TIDAK merekam layar
+            (MediaProjection), TIDAK membaca memori permainan Mobile Legends,
+            dan TIDAK meminta izin kontak, SMS, atau berkas pribadi Anda.
+          </p>
+        </div>
 
-      <h2>4. Hak Anda Berdasarkan UU PDP</h2>
-      <p>Sebagai Subjek Data Pribadi, Anda memiliki hak penuh untuk:</p>
-      <ul>
-        <li><strong>Mengakses Data:</strong> Melihat status langganan dan akun Anda langsung di aplikasi.</li>
-        <li><strong>Menghapus Data (Right to Erasure):</strong> Mengajukan penghapusan akun permanen melalui tombol <em>"Minta Hapus Akun"</em> pada menu Pengaturan, atau menghubungi kami melalui email.</li>
-        <li><strong>Menarik Persetujuan:</strong> Berhenti menggunakan aplikasi dan melakukan <em>Sign Out</em> kapan saja.</li>
-      </ul>
+        <h2>3. Tujuan Pemrosesan Data Pribadi</h2>
+        <ol>
+          <li>
+            Menyediakan fungsionalitas floating timer overlay cooldown spell
+            Mobile Legends.
+          </li>
+          <li>
+            Memvalidasi status masa trial 24 jam gratis dan langganan aktif
+            bulanan.
+          </li>
+          <li>
+            Mencegah manipulasi waktu lokal perangkat dengan mengacu pada jam
+            server Firebase.
+          </li>
+          <li>
+            Memverifikasi bukti transfer QRIS manual melalui email konfirmasi.
+          </li>
+          <li>Memberitahukan ketersediaan pembaruan versi resmi aplikasi.</li>
+        </ol>
 
-      <h2>5. Penafian Independensi Game</h2>
-      <p>
-        Timerin adalah aplikasi utilitas mengambang independen yang tidak berafiliasi, disponsori, didukung, atau disahkan secara resmi oleh Moonton atau pihak penerbit Mobile Legends: Bang Bang. Seluruh hak cipta dan merek dagang game tetap menjadi hak milik pemiliknya masing-masing.
-      </p>
+        <h2>4. Hak Anda Berdasarkan UU PDP</h2>
+        <p>Sebagai Subjek Data Pribadi, Anda memiliki hak penuh untuk:</p>
+        <ul>
+          <li>
+            <strong>Mengakses Data:</strong> Melihat status langganan dan akun
+            Anda langsung di aplikasi.
+          </li>
+          <li>
+            <strong>Menghapus Data (Right to Erasure):</strong> Mengajukan
+            penghapusan akun permanen melalui tombol
+            <em>"Minta Hapus Akun"</em> pada menu Pengaturan, atau menghubungi
+            kami melalui email.
+          </li>
+          <li>
+            <strong>Menarik Persetujuan:</strong> Berhenti menggunakan aplikasi
+            dan melakukan <em>Sign Out</em> kapan saja.
+          </li>
+        </ul>
 
-      <h2>6. Kontak Kami</h2>
-      <p>
-        Untuk permohonan pelaksanaan hak data pribadi atau pertanyaan seputar privasi, silakan hubungi tim kami melalui:
-      </p>
-      <p>
-        <strong>Email:</strong> <a href="mailto:support@timerin.com">support@timerin.com</a><br>
-        <strong>Subjek:</strong> Pelindungan Data Pribadi - Timerin
-      </p>
-    </main>
+        <h2>5. Penafian Independensi Game</h2>
+        <p>
+          Timerin adalah aplikasi utilitas mengambang independen yang tidak
+          berafiliasi, disponsori, didukung, atau disahkan secara resmi oleh
+          Moonton atau pihak penerbit Mobile Legends: Bang Bang. Seluruh hak
+          cipta dan merek dagang game tetap menjadi hak milik pemiliknya
+          masing-masing.
+        </p>
 
-    <footer>
-      &copy; 2026 Tim Pengembang Timerin. Seluruh hak cipta dilindungi undang-undang.
-    </footer>
-  </div>
-</body>
+        <h2>6. Kontak Kami</h2>
+        <p>
+          Untuk permohonan pelaksanaan hak data pribadi atau pertanyaan seputar
+          privasi, silakan hubungi tim kami melalui:
+        </p>
+        <p>
+          <strong>Email:</strong>
+          <a href="mailto:timerindev@gmail.com">timerindev@gmail.com</a><br />
+          <strong>Subjek:</strong> Pelindungan Data Pribadi - Timerin
+        </p>
+      </main>
+
+      <footer>
+        &copy; 2026 Tim Pengembang Timerin. Seluruh hak cipta dilindungi
+        undang-undang.
+      </footer>
+    </div>
+  </body>
 </html>

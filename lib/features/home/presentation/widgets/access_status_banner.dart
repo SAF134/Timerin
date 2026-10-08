@@ -53,7 +53,14 @@ class AccessStatusBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: AppRadius.cardRadius,
-        border: Border.all(color: borderColor, width: 1.2),
+        border: Border.all(color: AppColors.primary, width: 1.0),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 16.0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,18 +69,11 @@ class AccessStatusBanner extends StatelessWidget {
             children: <Widget>[
               Icon(icon, color: iconColor, size: 24.0),
               AppSpacing.gapW8,
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppTypography.body16Medium.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+              Expanded(child: Text(title, style: AppTypography.title20)),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 8.0,
-                  vertical: 3.0,
+                  vertical: 4.0,
                 ),
                 decoration: BoxDecoration(
                   color: badgeBg,
@@ -90,7 +90,11 @@ class AccessStatusBanner extends StatelessWidget {
             ],
           ),
           AppSpacing.gapH8,
-          Text(description, style: AppTypography.body14Muted),
+          Text(
+            description,
+            style: AppTypography.body14Muted,
+            textAlign: TextAlign.justify,
+          ),
           if (action != null) ...<Widget>[AppSpacing.gapH12, action],
         ],
       ),
@@ -108,6 +112,7 @@ class AccessStatusBanner extends StatelessWidget {
       description:
           'Trial 24 jam gratis siap dimulai saat kamu mengaktifkan overlay pertama kali.',
       borderColor: AppColors.border,
+      action: null,
     );
   }
 
@@ -122,21 +127,22 @@ class AccessStatusBanner extends StatelessWidget {
       description:
           'Masa coba gratis sedang aktif (${accessState.remainingFormatted}). Akses penuh seluruh fitur overlay.',
       borderColor: AppColors.accent.withValues(alpha: 0.5),
-      action: Align(
-        alignment: Alignment.centerLeft,
-        child: OutlinedButton.icon(
-          key: const Key('banner_subscribe_button'),
-          onPressed: onSubscribePressed,
-          icon: const Icon(Icons.bolt_rounded, size: 16.0),
-          label: const Text('Berlangganan Rp10.000/bln'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14.0,
-              vertical: 8.0,
-            ),
-          ),
-        ),
-      ),
+      action: onSubscribePressed != null
+          ? ElevatedButton.icon(
+              key: const Key('banner_subscribe_button'),
+              onPressed: onSubscribePressed,
+              icon: const Icon(Icons.bolt_rounded, size: 16.0),
+              label: const Text('Perpanjang Langganan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadius.buttonRadius,
+                ),
+                elevation: 2.0,
+              ),
+            )
+          : null,
     );
   }
 
@@ -149,8 +155,24 @@ class AccessStatusBanner extends StatelessWidget {
       badgeBg: AppColors.accent.withValues(alpha: 0.1),
       badgeTextColor: AppColors.primary,
       description:
-          'Status Berlangganan: Aktif (${accessState.remainingFormatted}). Terima kasih telah mendukung Timerin!',
+          'Status Berlangganan: Aktif (${accessState.remainingFormatted}).',
       borderColor: AppColors.accent.withValues(alpha: 0.6),
+      action: onSubscribePressed != null
+          ? ElevatedButton.icon(
+              key: const Key('banner_subscribe_button'),
+              onPressed: onSubscribePressed,
+              icon: const Icon(Icons.card_membership_rounded, size: 16.0),
+              label: const Text('Perpanjang Langganan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadius.buttonRadius,
+                ),
+                elevation: 2.0,
+              ),
+            )
+          : null,
     );
   }
 
@@ -158,22 +180,32 @@ class AccessStatusBanner extends StatelessWidget {
     return _buildCard(
       icon: Icons.warning_amber_rounded,
       iconColor: AppColors.error,
-      title: 'Masa Aktif Selesai',
+      title: 'Masa Aktif Habis',
       badgeText: 'Habis',
       badgeBg: AppColors.error.withValues(alpha: 0.1),
       badgeTextColor: AppColors.error,
       description:
           'Trial 24 jam selesai. Berlangganan Rp10.000/bulan untuk lanjut memakai timer.',
       borderColor: AppColors.error.withValues(alpha: 0.7),
-      action: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          key: const Key('banner_subscribe_button'),
-          onPressed: onSubscribePressed,
-          icon: const Icon(Icons.shopping_bag_outlined, size: 18.0),
-          label: const Text('Berlangganan Sekarang'),
-        ),
-      ),
+      action: onSubscribePressed != null
+          ? SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                key: const Key('banner_subscribe_button'),
+                onPressed: onSubscribePressed,
+                icon: const Icon(Icons.shopping_bag_outlined, size: 18.0),
+                label: const Text('Perpanjang Langganan'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textOnPrimary,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadius.buttonRadius,
+                  ),
+                  elevation: 2.0,
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

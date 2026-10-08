@@ -72,7 +72,7 @@ void main() {
 
       expect(find.text('Timerin'), findsOneWidget);
       expect(find.text('Smart Spell Cooldown Overlay'), findsOneWidget);
-      expect(find.byIcon(Icons.timer_outlined), findsOneWidget);
+      expect(find.byType(Image), findsOneWidget);
 
       await tester.pumpAndSettle();
     });

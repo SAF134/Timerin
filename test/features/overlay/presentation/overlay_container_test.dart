@@ -108,7 +108,7 @@ void main() {
 
         // Tap Timer 1 only
         await tester.tap(find.byKey(const ValueKey('overlay_timer_bubble_0')));
-        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
         // Timer 1 now has active circular progress indicator (running)
         // Timer 2 has no progress indicator (still idle)

@@ -75,7 +75,7 @@ class AppUpdateDialog extends ConsumerWidget {
           Text(
             'Versi $versionName sudah dirilis. '
             '${isForce ? "Versi yang Anda gunakan saat ini sudah tidak didukung. Harap perbarui untuk melanjutkan." : "Perbarui aplikasi untuk mendapatkan peningkatan performa dan perbaikan terbaru."}',
-            textAlign: TextAlign.center,
+            textAlign: TextAlign.justify,
             style: AppTypography.body14Muted,
           ),
 
@@ -103,6 +103,7 @@ class AppUpdateDialog extends ConsumerWidget {
                   AppSpacing.gapH4,
                   Text(
                     info.releaseNotes!,
+                    textAlign: TextAlign.justify,
                     style: AppTypography.caption12.copyWith(
                       color: AppColors.textMuted,
                     ),

@@ -9,6 +9,7 @@ import 'package:timerin/data/repositories/onboarding_repository.dart';
 import 'package:timerin/features/auth/presentation/login_screen.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
 import 'package:timerin/features/home/presentation/home_screen.dart';
+import 'package:timerin/features/onboarding/presentation/onboarding_screen.dart';
 
 class MockAuthService extends Mock implements AuthService {}
 
@@ -44,8 +45,11 @@ void main() {
 
       expect(find.text('Masuk ke Timerin'), findsOneWidget);
       expect(find.text('Masuk dengan Google'), findsOneWidget);
+      expect(find.text('Jaminan Keamanan Akun & Privasi'), findsOneWidget);
       expect(
-        find.text('Dengan masuk, kamu menyetujui Kebijakan Privasi Timerin.'),
+        find.textContaining(
+          'Dengan masuk, kamu menyetujui Kebijakan Privasi Timerin',
+        ),
         findsOneWidget,
       );
     });
@@ -96,5 +100,46 @@ void main() {
       );
       expect(find.text('Coba Lagi'), findsOneWidget);
     });
+
+    testWidgets(
+      'tapping Panduan & Fitur button navigates to OnboardingScreen',
+      (WidgetTester tester) async {
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(createWidgetUnderTest(prefs));
+
+        final onboardingBtn = find.byKey(const Key('view_onboarding_button'));
+        expect(onboardingBtn, findsOneWidget);
+
+        await tester.tap(onboardingBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnboardingScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'tapping privacy policy link opens AlertDialog with privacy details',
+      (WidgetTester tester) async {
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(createWidgetUnderTest(prefs));
+
+        final privacyLink = find.byKey(const Key('login_privacy_policy_link'));
+        expect(privacyLink, findsOneWidget);
+
+        await tester.tap(privacyLink);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.text('Kebijakan Privasi Timerin'), findsOneWidget);
+
+        // Tap Tutup to dismiss
+        await tester.tap(find.text('Tutup'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsNothing);
+      },
+    );
   });
 }

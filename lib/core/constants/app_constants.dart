@@ -7,7 +7,7 @@ abstract final class AppConstants {
   static const String subscriptionPriceFormatted = 'Rp10.000 / 30 hari';
 
   /// Alamat email tujuan penerimaan bukti transfer QRIS manual oleh pengembang.
-  static const String developerSupportEmail = 'support@timerin.com';
+  static const String developerSupportEmail = 'timerindev@gmail.com';
 
   /// Subjek standar email konfirmasi pembayaran.
   static const String paymentEmailSubject = 'Konfirmasi Pembayaran Timerin';
@@ -22,5 +22,5 @@ abstract final class AppConstants {
   static const int currentVersionCode = 1;
 
   /// Label lengkap versi aplikasi untuk tampilan UI (SCR-006).
-  static const String currentAppVersionFormatted = '1.0.0 (Build 1)';
+  static const String currentAppVersionFormatted = '1.0.0';
 }

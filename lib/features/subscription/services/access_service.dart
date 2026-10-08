@@ -36,11 +36,15 @@ final accessServiceProvider = Provider<AccessService>((ref) {
 class AccessNotifier extends Notifier<AccessState> {
   @override
   AccessState build() {
-    // Initial placeholder state
-    return const AccessState(
-      status: AccessStatus.baru,
-      remainingAccess: Duration.zero,
-    );
+    try {
+      final service = ref.watch(accessServiceProvider);
+      return service.lastState ?? service.checkAccessOfflineSync();
+    } catch (_) {
+      return const AccessState(
+        status: AccessStatus.baru,
+        remainingAccess: Duration.zero,
+      );
+    }
   }
 
   /// Sinkronisasi hak akses dengan Firestore / waktu server.
@@ -49,9 +53,15 @@ class AccessNotifier extends Notifier<AccessState> {
     if (user == null) return;
     try {
       final service = ref.read(accessServiceProvider);
-      state = await service.checkAccess(user.uid);
+      state = await service
+          .checkAccess(user.uid)
+          .timeout(const Duration(seconds: 5));
     } catch (_) {
-      // Abaikan jika Firestore belum terinisialisasi di widget test / offline
+      // Fallback offline jika Firestore lambat/offline
+      try {
+        final service = ref.read(accessServiceProvider);
+        state = service.lastState ?? service.checkAccessOfflineSync();
+      } catch (_) {}
     }
   }
 
@@ -108,16 +118,40 @@ class AccessService {
     required DateTime serverTime,
   }) {
     // 1. Cek status Berlangganan (Prioritas tertinggi)
-    if (user.subscriptionEndsAt != null &&
-        serverTime.isBefore(user.subscriptionEndsAt!)) {
-      final remaining = user.subscriptionEndsAt!.difference(serverTime);
-      return AccessState(
-        status: AccessStatus.berlangganan,
-        remainingAccess: remaining,
-        serverTime: serverTime,
-        trialStartedAt: user.trialStartedAt,
-        subscriptionEndsAt: user.subscriptionEndsAt,
-      );
+    if (user.subscriptionEndsAt != null) {
+      if (serverTime.isBefore(user.subscriptionEndsAt!)) {
+        final remaining = user.subscriptionEndsAt!.difference(serverTime);
+        return AccessState(
+          status: AccessStatus.berlangganan,
+          remainingAccess: remaining,
+          serverTime: serverTime,
+          trialStartedAt: user.trialStartedAt,
+          subscriptionEndsAt: user.subscriptionEndsAt,
+        );
+      } else {
+        // Langganan telah habis. Periksa apakah trial masih aktif (jika ada)
+        if (user.trialStartedAt != null) {
+          final trialExpiry = user.trialStartedAt!.add(trialDuration);
+          if (serverTime.isBefore(trialExpiry)) {
+            final remaining = trialExpiry.difference(serverTime);
+            return AccessState(
+              status: AccessStatus.trial,
+              remainingAccess: remaining,
+              serverTime: serverTime,
+              trialStartedAt: user.trialStartedAt,
+              subscriptionEndsAt: user.subscriptionEndsAt,
+            );
+          }
+        }
+        // Jika masa trial juga sudah lewat atau null, status akses HABIS
+        return AccessState(
+          status: AccessStatus.habis,
+          remainingAccess: Duration.zero,
+          serverTime: serverTime,
+          trialStartedAt: user.trialStartedAt,
+          subscriptionEndsAt: user.subscriptionEndsAt,
+        );
+      }
     }
 
     // 2. Cek status Trial
@@ -157,8 +191,12 @@ class AccessService {
   /// Memverifikasi hak akses terkini terhadap waktu server dan menghentikan overlay jika habis.
   Future<AccessState> checkAccess(String uid) async {
     try {
-      final serverTime = await _userRepository.syncServerTime(uid);
-      final user = await _userRepository.getUser(uid);
+      final serverTime = await _userRepository
+          .syncServerTime(uid)
+          .timeout(const Duration(seconds: 4));
+      final user = await _userRepository
+          .getUser(uid)
+          .timeout(const Duration(seconds: 4));
 
       if (user == null) {
         throw StateError('Dokumen pengguna tidak ditemukan');
@@ -190,6 +228,11 @@ class AccessService {
       // Fallback offline menggunakan cache lokal dan jam monotonik (TECH §5 item 4, NFR-004)
       return _checkAccessOffline();
     }
+  }
+
+  /// Evaluasi akses offline secara sinkron dari cache lokal.
+  AccessState checkAccessOfflineSync() {
+    return _checkAccessOffline();
   }
 
   /// Evaluasi akses offline berbasis selisih waktu monotonik (kebal ubah jam sistem).

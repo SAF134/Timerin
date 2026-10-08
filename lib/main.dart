@@ -7,6 +7,9 @@ import 'package:timerin/core/theme/app_theme.dart';
 import 'package:timerin/data/repositories/onboarding_repository.dart';
 import 'package:timerin/features/onboarding/presentation/splash_screen.dart';
 
+// Export entry point overlay untuk Flutter secondary engine (flutter_overlay_window)
+export 'package:timerin/overlay_main.dart' show overlayMain;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 

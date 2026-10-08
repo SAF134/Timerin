@@ -51,7 +51,7 @@ class AccessState {
   /// Format teks ramah pengguna untuk sisa masa akses (SCR-004).
   String get remainingFormatted {
     if (status == AccessStatus.baru) {
-      return 'Trial 24 jam siap dimulai';
+      return 'Trial 24 jam';
     }
     if (status == AccessStatus.habis) {
       return 'Masa aktif habis';

@@ -85,17 +85,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Container(
-              width: 80.0,
-              height: 80.0,
-              decoration: const BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: AppRadius.cardRadius,
-              ),
-              child: const Icon(
-                Icons.timer_outlined,
-                size: 44.0,
-                color: AppColors.primary,
+            Image.asset(
+              'assets/images/timerin.png',
+              width: 100.0,
+              height: 100.0,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => Container(
+                width: 80.0,
+                height: 80.0,
+                decoration: const BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: AppRadius.cardRadius,
+                ),
+                child: const Icon(
+                  Icons.timer_outlined,
+                  size: 44.0,
+                  color: AppColors.primary,
+                ),
               ),
             ),
             AppSpacing.gapH24,

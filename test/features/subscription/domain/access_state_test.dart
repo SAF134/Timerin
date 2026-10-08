@@ -38,7 +38,7 @@ void main() {
         status: AccessStatus.baru,
         remainingAccess: Duration.zero,
       );
-      expect(newState.remainingFormatted, 'Trial 24 jam siap dimulai');
+      expect(newState.remainingFormatted, 'Trial 24 jam');
 
       const expiredState = AccessState(
         status: AccessStatus.habis,

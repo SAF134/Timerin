@@ -67,7 +67,7 @@ void main() {
 
       await tester.pumpWidget(createWidgetUnderTest());
 
-      await tester.tap(find.text('Buka Pengaturan Izin'));
+      await tester.tap(find.text('Buka Setelan Izin Sistem'));
       await tester.pumpAndSettle();
 
       verify(() => mockPermissionService.requestOverlayPermission()).called(1);

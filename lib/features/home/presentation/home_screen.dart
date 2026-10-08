@@ -6,15 +6,15 @@ import 'package:timerin/core/theme/app_radius.dart';
 import 'package:timerin/core/theme/app_spacing.dart';
 import 'package:timerin/core/theme/app_typography.dart';
 import 'package:timerin/core/widgets/app_update_dialog.dart';
+import 'package:timerin/data/repositories/privacy_mode_repository.dart';
 import 'package:timerin/data/repositories/timer_settings_repository.dart';
-import 'package:timerin/features/auth/presentation/login_screen.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
-import 'package:timerin/features/home/presentation/widgets/access_status_banner.dart';
 import 'package:timerin/features/home/presentation/widgets/timer_settings_card.dart';
 import 'package:timerin/features/overlay/presentation/overlay_permission_dialog.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
 import 'package:timerin/features/overlay/services/overlay_service_controller.dart';
 import 'package:timerin/features/settings/presentation/settings_screen.dart';
+import 'package:timerin/features/subscription/domain/access_state.dart';
 import 'package:timerin/features/subscription/presentation/subscription_screen.dart';
 import 'package:timerin/features/subscription/services/access_service.dart';
 
@@ -68,17 +68,153 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
   }
 
+  Future<void> _handleStopOverlay() async {
+    final controller = ref.read(overlayServiceControllerProvider);
+    await controller.stopOverlay();
+    ref.read(overlayActiveProvider.notifier).setActive(false);
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Overlay dinonaktifkan.')));
+    }
+  }
+
+  void _showExpiredDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: const RoundedRectangleBorder(
+            borderRadius: AppRadius.cardRadius,
+          ),
+          title: const Text('Masa Akses Habis', style: AppTypography.title20),
+          content: const Text(
+            'Masa trial atau langganan akun Anda telah berakhir. Segera berlangganan untuk dapat menggunakan fitur overlay timer ini kembali.',
+            style: AppTypography.body14,
+            textAlign: TextAlign.justify,
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 20.0),
+          actions: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44.0),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadius.buttonRadius,
+                      ),
+                    ),
+                    child: const Text('Tutup'),
+                  ),
+                ),
+                AppSpacing.gapW12,
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      _navigateToSubscription();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44.0),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadius.buttonRadius,
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text('Langganan'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _handleStartOverlay(AccessState accessState) async {
+    if (accessState.isExpired) {
+      _showExpiredDialog();
+      return;
+    }
+
+    if (accessState.isNew) {
+      final started = await ref.read(accessStateProvider.notifier).startTrial();
+      if (!started) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text('Gagal memulai trial. Periksa koneksi internet.'),
+              ),
+            );
+        }
+        return;
+      }
+    }
+
+    final permissionService = ref.read(overlayPermissionServiceProvider);
+    final hasPermission = await permissionService.isOverlayPermissionGranted();
+
+    if (!hasPermission) {
+      if (mounted) {
+        await OverlayPermissionDialog.show(context);
+      }
+      return;
+    }
+
+    final controller = ref.read(overlayServiceControllerProvider);
+    final settings = ref.read(timerSettingsProvider);
+    final success = await controller.startOverlay(settings: settings);
+    if (success) {
+      ref.read(overlayActiveProvider.notifier).setActive(true);
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Overlay aktif. Ketuk 1x untuk mulai timer, ketuk 2x untuk reset.',
+              ),
+            ),
+          );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userModelAsync = ref.watch(currentUserModelProvider);
     final authUser = ref.watch(authServiceProvider).currentUser;
     final isOverlayActive = ref.watch(overlayActiveProvider);
     final accessState = ref.watch(accessStateProvider);
+    final isPrivacyMode = ref.watch(privacyModeProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('Timerin'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Image.asset(
+              'assets/images/timerin.png',
+              width: 32.0,
+              height: 32.0,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => const Icon(
+                Icons.timer_outlined,
+                size: 26.0,
+                color: AppColors.primary,
+              ),
+            ),
+            AppSpacing.gapW8,
+            const Text('Timerin'),
+          ],
+        ),
         actions: <Widget>[
           IconButton(
             key: const Key('home_settings_button'),
@@ -102,282 +238,195 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                // 1. User Card
+                // 1. User Card dengan Foto Profil Google & Mode Privasi
                 Container(
                   padding: AppSpacing.p24,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: AppRadius.cardRadius,
+                    border: Border.all(color: AppColors.primary, width: 1.0),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        blurRadius: 16.0,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: <Widget>[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          const Text(
-                            'Selamat Datang,',
-                            style: AppTypography.caption12,
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                              vertical: 2.0,
-                            ),
-                            decoration: BoxDecoration(
-                              color: accessState.isExpired
-                                  ? AppColors.error.withValues(alpha: 0.1)
-                                  : AppColors.accent.withValues(alpha: 0.1),
-                              borderRadius: AppRadius.buttonRadius,
-                            ),
-                            child: Text(
-                              accessState.remainingFormatted,
-                              style: AppTypography.caption12.copyWith(
-                                color: accessState.isExpired
-                                    ? AppColors.error
-                                    : AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
+                      CircleAvatar(
+                        radius: 26.0,
+                        backgroundColor: AppColors.surfaceVariant,
+                        backgroundImage:
+                            (!isPrivacyMode &&
+                                authUser?.photoURL != null &&
+                                authUser!.photoURL!.isNotEmpty)
+                            ? NetworkImage(authUser.photoURL!)
+                            : null,
+                        onBackgroundImageError:
+                            (!isPrivacyMode &&
+                                authUser?.photoURL != null &&
+                                authUser!.photoURL!.isNotEmpty)
+                            ? (_, _) {}
+                            : null,
+                        child:
+                            (isPrivacyMode ||
+                                authUser?.photoURL == null ||
+                                authUser!.photoURL!.isEmpty)
+                            ? const Icon(
+                                Icons.person_rounded,
+                                color: AppColors.primary,
+                                size: 30.0,
+                              )
+                            : null,
                       ),
-                      AppSpacing.gapH4,
-                      Text(
-                        userModelAsync.value?.displayName.isNotEmpty == true
-                            ? userModelAsync.value!.displayName
-                            : authUser?.displayName ?? 'Pemain',
-                        style: AppTypography.title20,
-                      ),
-                      AppSpacing.gapH8,
-                      Text(
-                        authUser?.email ?? '',
-                        style: AppTypography.body14Muted,
+                      AppSpacing.gapW16,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                const Text(
+                                  'Selamat Datang,',
+                                  style: AppTypography.caption12,
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0,
+                                    vertical: 2.0,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: accessState.isExpired
+                                        ? AppColors.error.withValues(alpha: 0.1)
+                                        : AppColors.accent.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                    borderRadius: AppRadius.buttonRadius,
+                                  ),
+                                  child: Text(
+                                    accessState.remainingFormatted,
+                                    style: AppTypography.caption12.copyWith(
+                                      color: accessState.isExpired
+                                          ? AppColors.error
+                                          : AppColors.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            AppSpacing.gapH4,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                Expanded(
+                                  child: Text(
+                                    userModelAsync
+                                                .value
+                                                ?.displayName
+                                                .isNotEmpty ==
+                                            true
+                                        ? userModelAsync.value!.displayName
+                                        : authUser?.displayName ?? 'Pemain',
+                                    style: AppTypography.title20,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                IconButton(
+                                  key: const Key('home_privacy_toggle_button'),
+                                  icon: Icon(
+                                    isPrivacyMode
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    size: 20.0,
+                                    color: AppColors.primary,
+                                  ),
+                                  tooltip: isPrivacyMode
+                                      ? 'Tampilkan Info Akun'
+                                      : 'Sembunyikan Info Akun',
+                                  onPressed: () {
+                                    ref
+                                        .read(privacyModeProvider.notifier)
+                                        .toggle();
+                                  },
+                                ),
+                              ],
+                            ),
+                            AppSpacing.gapH4,
+                            Text(
+                              isPrivacyMode ? '****' : (authUser?.email ?? ''),
+                              style: AppTypography.body14Muted,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
                 AppSpacing.gapH16,
 
-                // 2. Banner Status Akses (SCR-004, FR-004, FR-014)
-                AccessStatusBanner(
-                  accessState: accessState,
-                  onSubscribePressed: _navigateToSubscription,
-                ),
-                AppSpacing.gapH24,
-
-                // 3. Overlay Control Card (T-005, T-009, FR-014)
-                Container(
-                  padding: AppSpacing.p24,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: AppRadius.cardRadius,
-                    border: Border.all(
-                      color: isOverlayActive
-                          ? AppColors.accent
-                          : AppColors.border,
-                      width: isOverlayActive ? 1.5 : 1.0,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Icon(
-                            Icons.timer_outlined,
-                            color: isOverlayActive
-                                ? AppColors.accent
-                                : AppColors.primary,
-                            size: 24.0,
-                          ),
-                          AppSpacing.gapW12,
-                          const Text(
-                            'Overlay Spell',
-                            style: AppTypography.title20,
-                          ),
-                        ],
-                      ),
-                      AppSpacing.gapH8,
-                      const Text(
-                        'Tampilkan timer spell mengambang di atas game Mobile Legends.',
-                        style: AppTypography.body14Muted,
-                      ),
-                      AppSpacing.gapH16,
-                      Row(
-                        children: <Widget>[
-                          Container(
-                            width: 10.0,
-                            height: 10.0,
-                            decoration: BoxDecoration(
-                              color: isOverlayActive
-                                  ? AppColors.accent
-                                  : AppColors.textMuted,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          AppSpacing.gapW8,
-                          Text(
-                            isOverlayActive
-                                ? 'Status: Aktif'
-                                : 'Status: Nonaktif',
-                            style: AppTypography.body14.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: isOverlayActive
-                                  ? AppColors.accent
-                                  : AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                      AppSpacing.gapH16,
-                      SizedBox(
-                        width: double.infinity,
-                        child: isOverlayActive
-                            ? OutlinedButton.icon(
-                                key: const Key('stop_overlay_button'),
-                                onPressed: () async {
-                                  final controller = ref.read(
-                                    overlayServiceControllerProvider,
-                                  );
-                                  await controller.stopOverlay();
-                                  ref
-                                      .read(overlayActiveProvider.notifier)
-                                      .setActive(false);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context)
-                                      ..hideCurrentSnackBar()
-                                      ..showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Overlay dinonaktifkan.',
-                                          ),
-                                        ),
-                                      );
-                                  }
-                                },
-                                icon: const Icon(Icons.stop_rounded),
-                                label: const Text('Matikan Overlay'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.error,
-                                  side: const BorderSide(
-                                    color: AppColors.error,
-                                  ),
-                                ),
-                              )
-                            : ElevatedButton.icon(
-                                key: const Key('start_overlay_button'),
-                                // Tombol nonaktif jika akses telah HABIS (FR-014, SCR-004)
-                                onPressed: accessState.isExpired
-                                    ? null
-                                    : () async {
-                                        if (accessState.isNew) {
-                                          final started = await ref
-                                              .read(
-                                                accessStateProvider.notifier,
-                                              )
-                                              .startTrial();
-                                          if (!started) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context)
-                                                ..hideCurrentSnackBar()
-                                                ..showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'Gagal memulai trial. Periksa koneksi internet.',
-                                                    ),
-                                                  ),
-                                                );
-                                            }
-                                            return;
-                                          }
-                                        }
-
-                                        // Verifikasi izin overlay (T-006, FR-012)
-                                        final permissionService = ref.read(
-                                          overlayPermissionServiceProvider,
-                                        );
-                                        final hasPermission =
-                                            await permissionService
-                                                .isOverlayPermissionGranted();
-
-                                        if (!hasPermission) {
-                                          if (context.mounted) {
-                                            await OverlayPermissionDialog.show(
-                                              context,
-                                            );
-                                          }
-                                          return;
-                                        }
-
-                                        // Luncurkan overlay dengan konfigurasi timer (T-005, T-007)
-                                        final controller = ref.read(
-                                          overlayServiceControllerProvider,
-                                        );
-                                        final settings = ref.read(
-                                          timerSettingsProvider,
-                                        );
-                                        final success = await controller
-                                            .startOverlay(settings: settings);
-                                        if (success) {
-                                          ref
-                                              .read(
-                                                overlayActiveProvider.notifier,
-                                              )
-                                              .setActive(true);
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context)
-                                              ..hideCurrentSnackBar()
-                                              ..showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    'Overlay spell telah diaktifkan.',
-                                                  ),
-                                                ),
-                                              );
-                                          }
-                                        }
-                                      },
-                                icon: const Icon(Icons.play_arrow_rounded),
-                                label: const Text('Aktifkan Overlay'),
-                              ),
-                      ),
-                      if (accessState.isExpired) ...<Widget>[
-                        AppSpacing.gapH8,
-                        Text(
-                          'Tombol overlay dinonaktifkan karena masa akses telah selesai.',
-                          style: AppTypography.caption12.copyWith(
-                            color: AppColors.error,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                AppSpacing.gapH24,
-
-                // 4. Panel Pengaturan Timer Overlay & Pratinjau (T-007, SCR-004)
-                const TimerSettingsCard(),
-                AppSpacing.gapH24,
-
-                // 5. Logout Button
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    await ref.read(authServiceProvider).signOut();
-                    if (context.mounted) {
-                      await Navigator.of(context).pushReplacement(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const LoginScreen(),
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Keluar'),
-                ),
+                // 2. Panel Pengaturan Timer Overlay & Pratinjau (T-007, SCR-004)
+                TimerSettingsCard(isLocked: isOverlayActive),
               ],
             ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 16.0),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 10.0,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (accessState.isExpired) ...<Widget>[
+                Text(
+                  'Masa akses telah berakhir. Ketuk tombol untuk memperpanjang langganan.',
+                  style: AppTypography.caption12.copyWith(
+                    color: AppColors.error,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                AppSpacing.gapH8,
+              ],
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: isOverlayActive
+                    ? OutlinedButton.icon(
+                        key: const Key('stop_overlay_button'),
+                        onPressed: _handleStopOverlay,
+                        icon: const Icon(Icons.stop_rounded),
+                        label: const Text('Matikan Overlay'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          side: const BorderSide(color: AppColors.error),
+                          minimumSize: const Size.fromHeight(48.0),
+                        ),
+                      )
+                    : ElevatedButton.icon(
+                        key: const Key('start_overlay_button'),
+                        onPressed: () => _handleStartOverlay(accessState),
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: const Text('Aktifkan Overlay'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48.0),
+                        ),
+                      ),
+              ),
+            ],
           ),
         ),
       ),

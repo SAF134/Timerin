@@ -55,9 +55,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _completeOnboarding() async {
     await ref.read(onboardingRepositoryProvider).setHasSeenOnboarding(true);
     if (!mounted) return;
-    await Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
-    );
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      await Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      );
+    }
   }
 
   Future<void> _nextPage() async {
@@ -152,7 +156,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         AppSpacing.gapH16,
                         Text(
                           slide.description,
-                          textAlign: TextAlign.center,
+                          textAlign: TextAlign.justify,
                           style: AppTypography.body14.copyWith(
                             color: AppColors.textMutedHeader,
                             height: 1.5,

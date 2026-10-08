@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "676358060323-bf23qfomcnsm43dj1clr6psve514ldv9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.timerin.app",
+            "certificate_hash": "c90766e6085b69c31fb588b3ecd031f102eca5b6"
+          }
+        },
+        {
           "client_id": "676358060323-ngocp157nbdpd33783caqffee0kncp64.apps.googleusercontent.com",
           "client_type": 3
         }

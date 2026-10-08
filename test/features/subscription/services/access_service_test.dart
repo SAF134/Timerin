@@ -148,6 +148,54 @@ void main() {
     });
 
     test(
+      'evaluateAccess returns status habis when subscription has expired and trial is null',
+      () {
+        final serverTime = DateTime(2026, 10, 8, 12, 0);
+        final subEnd = DateTime(2026, 10, 7, 12, 0); // expired yesterday
+        final user = UserModel(
+          uid: testUid,
+          email: 'pemain@example.com',
+          displayName: 'Pemain',
+          subscriptionEndsAt: subEnd,
+        );
+
+        final result = AccessService.evaluateAccess(
+          user: user,
+          serverTime: serverTime,
+        );
+
+        expect(result.status, AccessStatus.habis);
+        expect(result.remainingAccess, Duration.zero);
+        expect(result.canActivateOverlay, isFalse);
+      },
+    );
+
+    test(
+      'evaluateAccess returns status habis when subscription and trial have both expired',
+      () {
+        final serverTime = DateTime(2026, 10, 8, 12, 0);
+        final subEnd = DateTime(2026, 10, 7, 12, 0); // expired yesterday
+        final trialStart = DateTime(2026, 9, 1, 12, 0); // long ago
+        final user = UserModel(
+          uid: testUid,
+          email: 'pemain@example.com',
+          displayName: 'Pemain',
+          trialStartedAt: trialStart,
+          subscriptionEndsAt: subEnd,
+        );
+
+        final result = AccessService.evaluateAccess(
+          user: user,
+          serverTime: serverTime,
+        );
+
+        expect(result.status, AccessStatus.habis);
+        expect(result.remainingAccess, Duration.zero);
+        expect(result.canActivateOverlay, isFalse);
+      },
+    );
+
+    test(
       'checkAccess syncs server time, saves cache, and evaluates status',
       () async {
         final serverTime = DateTime(2026, 10, 7, 12, 0);

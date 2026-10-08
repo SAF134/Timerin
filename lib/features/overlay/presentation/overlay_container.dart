@@ -6,6 +6,8 @@ import 'package:timerin/core/theme/app_spacing.dart';
 import 'package:timerin/data/models/timer_settings_model.dart';
 import 'package:timerin/data/repositories/timer_settings_repository.dart';
 import 'package:timerin/features/overlay/presentation/overlay_timer_bubble.dart';
+import 'package:timerin/features/overlay/services/overlay_service_controller.dart';
+import 'package:timerin/features/overlay/services/vibration_service.dart';
 
 /// Kontainer multi-timer overlay yang mendukung 1–5 timer, orientasi vertikal/horizontal,
 /// skala ukuran 50%–150%, durasi per timer independen, dan perpindahan posisi (FR-005..FR-011, SCR-007).
@@ -51,10 +53,12 @@ class _OverlayContainerState extends State<OverlayContainer> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final repo = TimerSettingsRepository(prefs: prefs);
+      final loaded = repo.getSettings();
       if (mounted) {
         setState(() {
-          _settings = repo.getSettings();
+          _settings = loaded;
         });
+        _syncWindowSize(loaded);
       }
     } catch (_) {
       // Abaikan jika lingkungan pengujian
@@ -66,14 +70,28 @@ class _OverlayContainerState extends State<OverlayContainer> {
       ) {
         if (!mounted || data == null) return;
         final jsonStr = data.toString();
+        if (jsonStr == 'TIMER_FINISHED') {
+          if (_settings.isVibrationEnabled) {
+            VibrationService.vibrate(durationMs: 2400);
+          }
+          return;
+        }
         final updatedSettings = TimerSettings.fromJson(jsonStr);
         setState(() {
           _settings = updatedSettings;
         });
+        _syncWindowSize(updatedSettings);
       });
     } catch (_) {
       // Abaikan jika channel overlay belum siap
     }
+  }
+
+  void _syncWindowSize(TimerSettings s) {
+    try {
+      final dims = OverlayServiceController.calculateWindowDimensions(s);
+      FlutterOverlayWindow.resizeOverlay(dims.width, dims.height, true);
+    } catch (_) {}
   }
 
   /// Memantau perubahan posisi overlay saat digeser pengguna di layar dan menyimpannya (FR-011).
@@ -127,23 +145,25 @@ class _OverlayContainerState extends State<OverlayContainer> {
             size: bubbleSize,
             initialDuration: duration,
             showMinutesSeconds: showMinutesSeconds,
+            isInteractive: widget.isInteractive,
+            isVibrationEnabled: settings.isVibrationEnabled,
           ),
         ),
       );
     }
 
-    if (isVertical) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: bubbles,
-      );
-    } else {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: bubbles,
-      );
-    }
+    final layoutWidget = isVertical
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: bubbles,
+          )
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: bubbles,
+          );
+
+    return FittedBox(fit: BoxFit.scaleDown, child: layoutWidget);
   }
 }

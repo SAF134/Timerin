@@ -9,7 +9,6 @@ import 'package:timerin/core/theme/app_theme.dart';
 import 'package:timerin/data/models/timer_settings_model.dart';
 import 'package:timerin/data/models/user_model.dart';
 import 'package:timerin/data/repositories/onboarding_repository.dart';
-import 'package:timerin/features/auth/presentation/login_screen.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
 import 'package:timerin/features/home/presentation/home_screen.dart';
 import 'package:timerin/features/home/presentation/widgets/access_status_banner.dart';
@@ -140,7 +139,7 @@ void main() {
     'HomeScreen Tests (T-004, T-005, T-007, T-008, T-009 / FR-004, FR-010, FR-013, FR-014, FR-016)',
     () {
       testWidgets(
-        'renders user card, access banner, and overlay control card with inactive status',
+        'renders user card, timer settings, and overlay control card with inactive status',
         (WidgetTester tester) async {
           await tester.pumpWidget(createWidgetUnderTest());
           await tester.pump();
@@ -148,9 +147,9 @@ void main() {
           expect(find.text('Selamat Datang,'), findsOneWidget);
           expect(find.text('Raka MLBB'), findsOneWidget);
           expect(find.text('raka@example.com'), findsOneWidget);
-          expect(find.byType(AccessStatusBanner), findsOneWidget);
-          expect(find.text('Overlay Spell'), findsOneWidget);
-          expect(find.text('Status: Nonaktif'), findsOneWidget);
+          expect(find.byType(AccessStatusBanner), findsNothing);
+          expect(find.text('sisa 20 jam'), findsOneWidget);
+          expect(find.text('Overlay Spell'), findsNothing);
           expect(find.byKey(const Key('start_overlay_button')), findsOneWidget);
         },
       );
@@ -250,12 +249,12 @@ void main() {
               settings: any(named: 'settings'),
             ),
           ).called(1);
-          expect(find.text('Status: Aktif'), findsOneWidget);
+          expect(find.byKey(const Key('stop_overlay_button')), findsOneWidget);
         },
       );
 
       testWidgets(
-        'when status is HABIS, Aktifkan Overlay button is disabled and warning caption is shown (FR-014)',
+        'when status is HABIS, tapping Aktifkan Overlay shows expired dialog with subscription redirect (FR-014)',
         (WidgetTester tester) async {
           await tester.pumpWidget(
             createWidgetUnderTest(
@@ -267,18 +266,24 @@ void main() {
           );
           await tester.pump();
 
-          final button = tester.widget<ElevatedButton>(
-            find.byKey(const Key('start_overlay_button')),
-          );
-          expect(button.onPressed, isNull);
+          final buttonFinder = find.byKey(const Key('start_overlay_button'));
+          expect(buttonFinder, findsOneWidget);
 
           expect(
             find.text(
-              'Tombol overlay dinonaktifkan karena masa akses telah selesai.',
+              'Masa akses telah berakhir. Ketuk tombol untuk memperpanjang langganan.',
             ),
             findsOneWidget,
           );
-          expect(find.text('Masa Aktif Selesai'), findsOneWidget);
+          expect(find.text('Masa aktif habis'), findsOneWidget);
+
+          await tester.ensureVisible(buttonFinder);
+          await tester.pumpAndSettle();
+          await tester.tap(buttonFinder);
+          await tester.pumpAndSettle();
+
+          expect(find.text('Masa Akses Habis'), findsOneWidget);
+          expect(find.text('Langganan'), findsOneWidget);
 
           verifyNever(
             () => mockOverlayController.startOverlay(
@@ -289,7 +294,7 @@ void main() {
       );
 
       testWidgets(
-        'tapping banner subscribe button opens SubscriptionScreen (SCR-005)',
+        'tapping Langganan in expired dialog opens SubscriptionScreen (SCR-005)',
         (WidgetTester tester) async {
           await tester.pumpWidget(
             createWidgetUnderTest(
@@ -301,11 +306,15 @@ void main() {
           );
           await tester.pump();
 
-          final subscribeBtn = find.byKey(const Key('banner_subscribe_button'));
+          final buttonFinder = find.byKey(const Key('start_overlay_button'));
+          await tester.ensureVisible(buttonFinder);
+          await tester.pumpAndSettle();
+          await tester.tap(buttonFinder);
+          await tester.pumpAndSettle();
+
+          final subscribeBtn = find.text('Langganan');
           expect(subscribeBtn, findsOneWidget);
 
-          await tester.ensureVisible(subscribeBtn);
-          await tester.pumpAndSettle();
           await tester.tap(subscribeBtn);
           await tester.pumpAndSettle();
 
@@ -354,11 +363,38 @@ void main() {
               settings: any(named: 'settings'),
             ),
           ).called(1);
-          expect(find.text('Status: Aktif'), findsOneWidget);
           expect(find.byKey(const Key('stop_overlay_button')), findsOneWidget);
-          expect(find.text('Overlay spell telah diaktifkan.'), findsOneWidget);
+          expect(
+            find.text(
+              'Overlay aktif. Ketuk 1x untuk mulai timer, ketuk 2x untuk reset.',
+            ),
+            findsOneWidget,
+          );
         },
       );
+
+      testWidgets('tapping privacy toggle button masks and unmasks user info', (
+        WidgetTester tester,
+      ) async {
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pump();
+
+        expect(find.text('raka@example.com'), findsOneWidget);
+        final toggleBtn = find.byKey(const Key('home_privacy_toggle_button'));
+        expect(toggleBtn, findsOneWidget);
+
+        await tester.tap(toggleBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.text('****'), findsOneWidget);
+        expect(find.text('raka@example.com'), findsNothing);
+
+        // Tap again to unmask
+        await tester.tap(toggleBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.text('raka@example.com'), findsOneWidget);
+      });
 
       testWidgets(
         'tapping Matikan Overlay calls stopOverlay and reverts status to inactive',
@@ -384,7 +420,7 @@ void main() {
           await tester.pumpAndSettle();
           await tester.tap(startBtn);
           await tester.pumpAndSettle();
-          expect(find.text('Status: Aktif'), findsOneWidget);
+          expect(find.byKey(const Key('stop_overlay_button')), findsOneWidget);
 
           // 2. Deactivate
           final stopBtn = find.byKey(const Key('stop_overlay_button'));
@@ -394,26 +430,18 @@ void main() {
           await tester.pumpAndSettle();
 
           verify(() => mockOverlayController.stopOverlay()).called(1);
-          expect(find.text('Status: Nonaktif'), findsOneWidget);
           expect(find.byKey(const Key('start_overlay_button')), findsOneWidget);
           expect(find.text('Overlay dinonaktifkan.'), findsOneWidget);
         },
       );
 
-      testWidgets('tapping Keluar calls signOut and navigates to LoginScreen', (
+      testWidgets('Keluar button is not rendered on HomeScreen (SCR-004)', (
         WidgetTester tester,
       ) async {
         await tester.pumpWidget(createWidgetUnderTest());
         await tester.pump();
 
-        await tester.ensureVisible(find.text('Keluar'));
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('Keluar'));
-        await tester.pumpAndSettle();
-
-        verify(() => mockAuthService.signOut()).called(1);
-        expect(find.byType(LoginScreen), findsOneWidget);
+        expect(find.text('Keluar'), findsNothing);
       });
 
       testWidgets(

@@ -18,6 +18,7 @@
 | `FOREGROUND_SERVICE` | Menjaga service overlay tetap hidup di latar belakang |
 | `FOREGROUND_SERVICE_SPECIAL_USE` | Tipe foreground service Android 14 (API 34+) untuk floating utility/timer overlay |
 | `POST_NOTIFICATIONS` | Notifikasi persisten service overlay (Android 13+) |
+| `VIBRATE` | Memberi getaran haptik fisik saat timer hitung mundur habis |
 
 **Konfigurasi Manifest Tambahan:**
 - Android 11+ (API 30+): Deklarasikan `<queries>` untuk intent `https` (browser) dan `mailto:` (email).

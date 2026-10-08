@@ -24,7 +24,7 @@ void main() {
       expect(settings.getDurationFor(99), 30); // out of bounds fallback
     });
 
-    test('copyWith clamps timerCount (1..5) and scale (0.5..1.5)', () {
+    test('copyWith clamps timerCount (1..5) and scale (0.5..1.0)', () {
       const settings = TimerSettings();
 
       final highCount = settings.copyWith(timerCount: 10);
@@ -34,7 +34,7 @@ void main() {
       expect(lowCount.timerCount, 1);
 
       final highScale = settings.copyWith(scale: 2.5);
-      expect(highScale.scale, 1.5);
+      expect(highScale.scale, 1.0);
 
       final lowScale = settings.copyWith(scale: 0.1);
       expect(lowScale.scale, 0.5);
@@ -62,7 +62,7 @@ void main() {
           timerCount: 4,
           timeFormat: TimeDisplayFormat.minutesSeconds,
           orientation: TimerOrientation.horizontal,
-          scale: 1.25,
+          scale: 0.85,
           durations: <int>[60, 120, 180, 240, 30],
         );
 
@@ -73,7 +73,7 @@ void main() {
         expect(restored.timerCount, 4);
         expect(restored.timeFormat, TimeDisplayFormat.minutesSeconds);
         expect(restored.orientation, TimerOrientation.horizontal);
-        expect(restored.scale, 1.25);
+        expect(restored.scale, 0.85);
         expect(restored.durations, <int>[60, 120, 180, 240, 30]);
       },
     );
@@ -113,6 +113,18 @@ void main() {
       expect(reset.positionX, isNull);
       expect(reset.positionY, isNull);
       expect(reset.hasCustomPosition, isFalse);
+    });
+
+    test('isVibrationEnabled defaults to true and serializes accurately', () {
+      const settings = TimerSettings();
+      expect(settings.isVibrationEnabled, isTrue);
+
+      final disabled = settings.copyWith(isVibrationEnabled: false);
+      expect(disabled.isVibrationEnabled, isFalse);
+
+      final jsonStr = disabled.toJson();
+      final restored = TimerSettings.fromJson(jsonStr);
+      expect(restored.isVibrationEnabled, isFalse);
     });
   });
 }

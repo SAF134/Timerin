@@ -32,7 +32,7 @@ void main() {
           timerCount: 5,
           timeFormat: TimeDisplayFormat.minutesSeconds,
           orientation: TimerOrientation.horizontal,
-          scale: 1.2,
+          scale: 0.85,
           durations: <int>[30, 45, 60, 90, 120],
         );
 
@@ -74,8 +74,8 @@ void main() {
         );
 
         // 4. setScale
-        await notifier.setScale(1.4);
-        expect(container.read(timerSettingsProvider).scale, 1.4);
+        await notifier.setScale(0.85);
+        expect(container.read(timerSettingsProvider).scale, 0.85);
 
         // 5. setTimerDuration
         await notifier.setTimerDuration(2, 75);
@@ -87,7 +87,7 @@ void main() {
         expect(persisted.timerCount, 5);
         expect(persisted.timeFormat, TimeDisplayFormat.minutesSeconds);
         expect(persisted.orientation, TimerOrientation.horizontal);
-        expect(persisted.scale, 1.4);
+        expect(persisted.scale, 0.85);
         expect(persisted.getDurationFor(2), 75);
 
         container.dispose();

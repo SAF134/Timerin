@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timerin/data/models/timer_settings_model.dart';
@@ -112,15 +113,22 @@ class OverlayServiceController {
     final finalHeight = height ?? effectiveDimensions.height;
 
     // 4. Hitung posisi awal tersimpan jika tersedia (FR-011, SCR-007)
+    // Berikan posisi awal aman (16, 160) agar tidak terpotong di status bar jika belum diatur
     final startPos =
         (settings?.positionX != null && settings?.positionY != null)
         ? OverlayPosition(settings!.positionX!, settings.positionY!)
-        : null;
+        : const OverlayPosition(16.0, 160.0);
+
+    // WindowManager Android memerlukan pixel fisik pada showOverlay
+    final view = WidgetsBinding.instance.platformDispatcher.views.firstOrNull;
+    final pixelRatio = view?.devicePixelRatio ?? 3.0;
+    final widthPx = (finalWidth * pixelRatio).ceil();
+    final heightPx = (finalHeight * pixelRatio).ceil();
 
     // 5. Tampilkan overlay dengan foreground service dan notifikasi persisten
     await FlutterOverlayWindow.showOverlay(
-      height: finalHeight,
-      width: finalWidth,
+      height: heightPx,
+      width: widthPx,
       alignment: alignment,
       visibility: NotificationVisibility.visibilityPublic,
       overlayTitle: 'Timerin Aktif',
@@ -130,6 +138,30 @@ class OverlayServiceController {
       startPosition: startPos,
     );
 
+    // 6. Sinkronisasi data pengaturan dan resize ke overlay process
+    if (settings != null) {
+      Future.delayed(const Duration(milliseconds: 250), () {
+        FlutterOverlayWindow.shareData(
+          settings.toJson(),
+        ).catchError((_) => null);
+        FlutterOverlayWindow.resizeOverlay(
+          finalWidth,
+          finalHeight,
+          enableDrag,
+        ).catchError((_) => null);
+      });
+      Future.delayed(const Duration(milliseconds: 700), () {
+        FlutterOverlayWindow.shareData(
+          settings.toJson(),
+        ).catchError((_) => null);
+        FlutterOverlayWindow.resizeOverlay(
+          finalWidth,
+          finalHeight,
+          enableDrag,
+        ).catchError((_) => null);
+      });
+    }
+
     return true;
   }
 
@@ -137,6 +169,7 @@ class OverlayServiceController {
   Future<void> updateDimensions(TimerSettings settings) async {
     final dims = calculateWindowDimensions(settings);
     await FlutterOverlayWindow.resizeOverlay(dims.width, dims.height, true);
+    await FlutterOverlayWindow.shareData(settings.toJson());
   }
 
   /// Menghentikan layanan overlay dan menghapus notifikasi persisten.

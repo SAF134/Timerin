@@ -3,14 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timerin/core/services/app_update_service.dart';
 import 'package:timerin/core/services/url_launcher_service.dart';
 import 'package:timerin/core/theme/app_theme.dart';
 import 'package:timerin/data/models/user_model.dart';
+import 'package:timerin/data/repositories/onboarding_repository.dart';
 import 'package:timerin/data/repositories/user_repository.dart';
 import 'package:timerin/features/auth/presentation/login_screen.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
+import 'package:timerin/features/settings/presentation/about_developer_screen.dart';
 import 'package:timerin/features/settings/presentation/settings_screen.dart';
 import 'package:timerin/features/subscription/domain/access_state.dart';
 import 'package:timerin/features/subscription/presentation/subscription_screen.dart';
@@ -45,6 +48,7 @@ void main() {
   late MockOverlayPermissionService mockPermissionService;
   late MockUrlLauncherService mockLauncherService;
   late MockAppUpdateService mockUpdateService;
+  late SharedPreferences prefs;
 
   final testDate = DateTime(2026, 11, 20, 15, 30);
   final testUserModel = UserModel(
@@ -54,13 +58,16 @@ void main() {
     subscriptionEndsAt: testDate,
   );
 
-  setUp(() {
+  setUp(() async {
     mockAuthService = MockAuthService();
     mockUser = MockUser();
     mockUserRepo = MockUserRepository();
     mockPermissionService = MockOverlayPermissionService();
     mockLauncherService = MockUrlLauncherService();
     mockUpdateService = MockAppUpdateService();
+
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    prefs = await SharedPreferences.getInstance();
 
     when(() => mockUser.uid).thenReturn('user_settings_123');
     when(() => mockUser.email).thenReturn('settings_user@example.com');
@@ -94,6 +101,7 @@ void main() {
   }) {
     return ProviderScope(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
         authServiceProvider.overrideWithValue(mockAuthService),
         userRepositoryProvider.overrideWithValue(mockUserRepo),
         overlayPermissionServiceProvider.overrideWithValue(
@@ -169,53 +177,40 @@ void main() {
       },
     );
 
-    testWidgets('expanding battery optimization tile shows brand tips', (
+    testWidgets('tapping Kebijakan Privasi opens dialog and Tutup closes it', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      final tile = find.byKey(const Key('battery_optimization_tile'));
-      await tester.ensureVisible(tile);
+      final privacyTile = find.byKey(const Key('privacy_policy_tile'));
+      await tester.ensureVisible(privacyTile);
       await tester.pumpAndSettle();
-      await tester.tap(tile);
+      await tester.tap(privacyTile);
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Xiaomi / Redmi / POCO (MIUI / HyperOS)'),
-        findsOneWidget,
-      );
-      expect(find.text('Samsung (One UI)'), findsOneWidget);
-      expect(find.text('Oppo / Realme (ColorOS / Realme UI)'), findsOneWidget);
-      expect(find.text('Vivo / iQOO (Funtouch OS)'), findsOneWidget);
+      expect(find.text('Kebijakan Privasi Timerin'), findsOneWidget);
+      expect(find.text('Buka di Browser'), findsNothing);
+
+      await tester.tap(find.text('Tutup'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Kebijakan Privasi Timerin'), findsNothing);
     });
 
     testWidgets(
-      'tapping Kebijakan Privasi opens dialog and Buka di Browser calls launchExternalUrl',
+      'tapping Tentang Pengembang navigates to AboutDeveloperScreen',
       (WidgetTester tester) async {
-        when(
-          () => mockLauncherService.launchExternalUrl(any()),
-        ).thenAnswer((_) async => true);
-
         await tester.pumpWidget(createWidgetUnderTest());
         await tester.pumpAndSettle();
 
-        final privacyTile = find.byKey(const Key('privacy_policy_tile'));
-        await tester.ensureVisible(privacyTile);
+        final aboutTile = find.byKey(const Key('about_developer_tile'));
+        await tester.ensureVisible(aboutTile);
         await tester.pumpAndSettle();
-        await tester.tap(privacyTile);
-        await tester.pumpAndSettle();
-
-        expect(find.text('Kebijakan Privasi Timerin'), findsOneWidget);
-
-        await tester.tap(find.text('Buka di Browser'));
+        await tester.tap(aboutTile);
         await tester.pumpAndSettle();
 
-        verify(
-          () => mockLauncherService.launchExternalUrl(
-            SettingsScreen.privacyPolicyUrl,
-          ),
-        ).called(1);
+        expect(find.byType(AboutDeveloperScreen), findsOneWidget);
       },
     );
 
@@ -241,42 +236,14 @@ void main() {
       },
     );
 
-    testWidgets(
-      'tapping Minta Hapus Akun shows dialog, confirming requests deletion',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(createWidgetUnderTest());
-        await tester.pumpAndSettle();
+    testWidgets('Minta Hapus Akun is not rendered on SettingsScreen', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
-        final deleteBtn = find.byKey(
-          const Key('settings_delete_account_button'),
-        );
-        await tester.ensureVisible(deleteBtn);
-        await tester.pumpAndSettle();
-        await tester.tap(deleteBtn);
-        await tester.pumpAndSettle();
-
-        expect(
-          find.descendant(
-            of: find.byType(AlertDialog),
-            matching: find.text('Minta Hapus Akun'),
-          ),
-          findsOneWidget,
-        );
-
-        await tester.tap(
-          find.byKey(const Key('confirm_delete_account_button')),
-        );
-        await tester.pumpAndSettle();
-
-        verify(
-          () => mockUserRepo.requestAccountDeletion('user_settings_123'),
-        ).called(1);
-        expect(
-          find.text('Permintaan hapus akun telah dikirimkan ke pengembang.'),
-          findsOneWidget,
-        );
-      },
-    );
+      expect(find.text('Minta Hapus Akun'), findsNothing);
+    });
 
     testWidgets(
       'tapping Periksa Pembaruan shows snackbar when app is up to date',
@@ -324,6 +291,36 @@ void main() {
 
         expect(find.text('Pembaruan Aplikasi Tersedia'), findsOneWidget);
         expect(find.text('Fitur baru!'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'toggling privacy mode switch masks and unmasks account email and UID',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
+
+        expect(find.text('settings_user@example.com'), findsOneWidget);
+        expect(find.text('user_settings_123'), findsOneWidget);
+
+        final privacySwitch = find.byKey(const Key('privacy_mode_switch'));
+        expect(privacySwitch, findsOneWidget);
+
+        await tester.ensureVisible(privacySwitch);
+        await tester.pumpAndSettle();
+        await tester.tap(privacySwitch);
+        await tester.pumpAndSettle();
+
+        expect(find.text('****'), findsNWidgets(2));
+        expect(find.text('settings_user@example.com'), findsNothing);
+        expect(find.text('user_settings_123'), findsNothing);
+
+        // Tap again to unmask
+        await tester.tap(privacySwitch);
+        await tester.pumpAndSettle();
+
+        expect(find.text('settings_user@example.com'), findsOneWidget);
+        expect(find.text('user_settings_123'), findsOneWidget);
       },
     );
   });

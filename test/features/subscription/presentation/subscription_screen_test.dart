@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:timerin/core/constants/app_constants.dart';
 import 'package:timerin/core/services/url_launcher_service.dart';
 import 'package:timerin/core/theme/app_theme.dart';
+import 'package:timerin/data/repositories/privacy_mode_repository.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
 import 'package:timerin/features/subscription/domain/access_state.dart';
 import 'package:timerin/features/subscription/presentation/subscription_screen.dart';
@@ -32,6 +33,15 @@ class FakeAccessNotifier extends AccessNotifier {
   }
 }
 
+class FakePrivacyModeNotifier extends PrivacyModeNotifier {
+  FakePrivacyModeNotifier(this._initialState);
+
+  final bool _initialState;
+
+  @override
+  bool build() => _initialState;
+}
+
 void main() {
   late MockAuthService mockAuthService;
   late MockUser mockUser;
@@ -53,6 +63,7 @@ void main() {
       remainingAccess: Duration.zero,
     ),
     FakeAccessNotifier? customNotifier,
+    bool isPrivacyMode = false,
   }) {
     final notifier = customNotifier ?? FakeAccessNotifier(accessState);
 
@@ -61,6 +72,9 @@ void main() {
         authServiceProvider.overrideWithValue(mockAuthService),
         urlLauncherServiceProvider.overrideWithValue(mockLauncherService),
         accessStateProvider.overrideWith(() => notifier),
+        privacyModeProvider.overrideWith(
+          () => FakePrivacyModeNotifier(isPrivacyMode),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.theme,
@@ -77,6 +91,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Berlangganan'), findsOneWidget);
+      expect(find.text('Status: Masa Aktif Habis'), findsOneWidget);
       expect(find.text('Rp10.000'), findsOneWidget);
       expect(find.text('/ 30 hari'), findsOneWidget);
       expect(find.text('QRIS Pembayaran Statis'), findsOneWidget);
@@ -85,6 +100,18 @@ void main() {
       expect(find.text('UID: user_123_abc'), findsOneWidget);
       expect(find.byKey(const Key('send_proof_email_button')), findsOneWidget);
       expect(find.byKey(const Key('refresh_status_button')), findsOneWidget);
+    });
+
+    testWidgets('masks email and UID when privacy mode is active', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest(isPrivacyMode: true));
+      await tester.pump();
+
+      expect(find.text('****'), findsOneWidget);
+      expect(find.text('UID: ****'), findsOneWidget);
+      expect(find.text('gamer@example.com'), findsNothing);
+      expect(find.text('UID: user_123_abc'), findsNothing);
     });
 
     testWidgets(

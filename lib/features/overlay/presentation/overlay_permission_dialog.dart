@@ -66,6 +66,7 @@ class OverlayPermissionDialog extends ConsumerWidget {
                   color: AppColors.text,
                   height: 1.45,
                 ),
+                textAlign: TextAlign.justify,
               ),
               AppSpacing.gapH24,
 
@@ -76,7 +77,15 @@ class OverlayPermissionDialog extends ConsumerWidget {
                   await permissionService.requestOverlayPermission();
                 },
                 icon: const Icon(Icons.settings),
-                label: const Text('Buka Pengaturan Izin'),
+                label: const Text('Buka Setelan Izin Sistem'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textOnPrimary,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadius.buttonRadius,
+                  ),
+                  elevation: 2.0,
+                ),
               ),
               AppSpacing.gapH24,
 
@@ -86,7 +95,14 @@ class OverlayPermissionDialog extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: AppColors.surfaceVariant,
                   borderRadius: AppRadius.cardRadius,
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: AppColors.primary, width: 1.0),
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      blurRadius: 16.0,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,6 +132,7 @@ class OverlayPermissionDialog extends ConsumerWidget {
                       style: AppTypography.caption12.copyWith(
                         color: AppColors.textMuted,
                       ),
+                      textAlign: TextAlign.justify,
                     ),
                     AppSpacing.gapH12,
                     _buildStepItem('1', 'Buka Info Aplikasi Timerin'),
@@ -128,15 +145,104 @@ class OverlayPermissionDialog extends ConsumerWidget {
                       'Pilih "Izinkan setelan terbatas" & masukkan PIN/sidik jari',
                     ),
                     AppSpacing.gapH12,
-                    OutlinedButton.icon(
+                    ElevatedButton.icon(
                       onPressed: () async {
                         await permissionService.openApplicationSettings();
                       },
-                      style: OutlinedButton.styleFrom(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.textOnPrimary,
                         minimumSize: const Size.fromHeight(40.0),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: AppRadius.buttonRadius,
+                        ),
+                        elevation: 2.0,
                       ),
                       icon: const Icon(Icons.app_settings_alt, size: 18.0),
                       label: const Text('Buka Setelan Info Aplikasi'),
+                    ),
+                  ],
+                ),
+              ),
+              AppSpacing.gapH16,
+
+              // Section: Xiaomi / MIUI / HyperOS Guide
+              Container(
+                padding: AppSpacing.p16,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: AppRadius.cardRadius,
+                  border: Border.all(color: AppColors.primary, width: 1.0),
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      blurRadius: 16.0,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          size: 20.0,
+                          color: AppColors.warning,
+                        ),
+                        AppSpacing.gapW8,
+                        Expanded(
+                          child: Text(
+                            'Khusus HP Xiaomi / Redmi / POCO',
+                            style: AppTypography.body14.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.text,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    AppSpacing.gapH8,
+                    Text(
+                      'MIUI & HyperOS memblokir overlay jika izin latar belakang belum aktif:',
+                      style: AppTypography.caption12.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                      textAlign: TextAlign.justify,
+                    ),
+                    AppSpacing.gapH8,
+                    _buildStepItem(
+                      '1',
+                      'Buka Info Aplikasi Timerin di Setelan HP',
+                    ),
+                    _buildStepItem(
+                      '2',
+                      'Pilih menu "Perizinan Lainnya" (Other Permissions)',
+                    ),
+                    _buildStepItem(
+                      '3',
+                      'Centang "Tampilkan jendela pop-up saat di latar belakang"',
+                    ),
+                    AppSpacing.gapH8,
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await permissionService.openApplicationSettings();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.textOnPrimary,
+                        minimumSize: const Size.fromHeight(36.0),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: AppRadius.buttonRadius,
+                        ),
+                        elevation: 2.0,
+                      ),
+                      icon: const Icon(
+                        Icons.settings_suggest_rounded,
+                        size: 18.0,
+                      ),
+                      label: const Text('Buka Info Aplikasi Xiaomi'),
                     ),
                   ],
                 ),
@@ -191,6 +297,7 @@ class OverlayPermissionDialog extends ConsumerWidget {
                 color: AppColors.text,
                 height: 1.3,
               ),
+              textAlign: TextAlign.justify,
             ),
           ),
         ],
