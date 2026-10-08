@@ -20,9 +20,7 @@ class OverlayApp extends StatelessWidget {
       theme: AppTheme.theme,
       home: const Scaffold(
         backgroundColor: Colors.transparent,
-        body: Center(
-          child: FittedBox(fit: BoxFit.scaleDown, child: OverlayContainer()),
-        ),
+        body: Center(child: OverlayContainer()),
       ),
     );
   }

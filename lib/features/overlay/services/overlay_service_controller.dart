@@ -87,7 +87,7 @@ class OverlayServiceController {
     TimerSettings? settings,
     int? height,
     int? width,
-    OverlayAlignment alignment = OverlayAlignment.centerLeft,
+    OverlayAlignment alignment = OverlayAlignment.topLeft,
     bool enableDrag = true,
   }) async {
     // 1. Verifikasi izin overlay
@@ -115,8 +115,11 @@ class OverlayServiceController {
     // 4. Hitung posisi awal tersimpan jika tersedia (FR-011, SCR-007)
     // Berikan posisi awal aman (16, 160) agar tidak terpotong di status bar jika belum diatur
     final startPos =
-        (settings?.positionX != null && settings?.positionY != null)
-        ? OverlayPosition(settings!.positionX!, settings.positionY!)
+        (settings?.positionX != null &&
+            settings?.positionY != null &&
+            settings!.positionX! >= 0 &&
+            settings.positionY! >= 0)
+        ? OverlayPosition(settings.positionX!, settings.positionY!)
         : const OverlayPosition(16.0, 160.0);
 
     // WindowManager Android memerlukan pixel fisik pada showOverlay

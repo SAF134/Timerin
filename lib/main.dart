@@ -7,8 +7,19 @@ import 'package:timerin/core/theme/app_theme.dart';
 import 'package:timerin/data/repositories/onboarding_repository.dart';
 import 'package:timerin/features/onboarding/presentation/splash_screen.dart';
 
-// Export entry point overlay untuk Flutter secondary engine (flutter_overlay_window)
-export 'package:timerin/overlay_main.dart' show overlayMain;
+import 'package:timerin/overlay_main.dart';
+
+// Export entry point overlay untuk kompatibilitas
+export 'package:timerin/overlay_main.dart' show OverlayApp;
+
+/// Entry point khusus untuk proses background flutter_overlay_window.
+/// Didefinisikan secara langsung di main.dart agar Flutter Engine dapat
+/// menemukan entrypoint saat diluncurkan secara native oleh DartExecutor.
+@pragma('vm:entry-point')
+void overlayMain() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const OverlayApp());
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

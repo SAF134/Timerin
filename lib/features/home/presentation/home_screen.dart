@@ -176,9 +176,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
-            const SnackBar(
-              content: Text(
+            SnackBar(
+              content: const Text(
                 'Overlay aktif. Ketuk 1x untuk mulai timer, ketuk 2x untuk reset.',
+              ),
+              action: SnackBarAction(
+                label: 'Cek Izin',
+                textColor: AppColors.accent,
+                onPressed: () => OverlayPermissionDialog.show(context),
               ),
             ),
           );
@@ -405,16 +410,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 child: isOverlayActive
-                    ? OutlinedButton.icon(
-                        key: const Key('stop_overlay_button'),
-                        onPressed: _handleStopOverlay,
-                        icon: const Icon(Icons.stop_rounded),
-                        label: const Text('Matikan Overlay'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.error,
-                          side: const BorderSide(color: AppColors.error),
-                          minimumSize: const Size.fromHeight(48.0),
-                        ),
+                    ? Column(
+                        key: const Key('stop_overlay_column'),
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          OutlinedButton.icon(
+                            key: const Key('stop_overlay_button'),
+                            onPressed: _handleStopOverlay,
+                            icon: const Icon(Icons.stop_rounded),
+                            label: const Text('Matikan Overlay'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.error,
+                              side: const BorderSide(color: AppColors.error),
+                              minimumSize: const Size.fromHeight(48.0),
+                            ),
+                          ),
+                          AppSpacing.gapH8,
+                          GestureDetector(
+                            key: const Key('home_xiaomi_permission_guide'),
+                            onTap: () => OverlayPermissionDialog.show(context),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 4.0,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  const Icon(
+                                    Icons.help_outline_rounded,
+                                    size: 14.0,
+                                    color: AppColors.accent,
+                                  ),
+                                  AppSpacing.gapW4,
+                                  Text(
+                                    'Overlay belum muncul? Panduan izin Xiaomi',
+                                    style: AppTypography.caption12.copyWith(
+                                      color: AppColors.accent,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       )
                     : ElevatedButton.icon(
                         key: const Key('start_overlay_button'),

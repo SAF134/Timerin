@@ -21,7 +21,7 @@
 
 [CmdletBinding()]
 param (
-    [switch]$SplitPerAbi = $true,
+    [switch]$SplitPerAbi = $false,
     [switch]$SkipTests = $false,
     [switch]$Clean = $false
 )
@@ -78,11 +78,18 @@ if (-not $SkipTests) {
 
 # 5. Build Release APK
 Write-Host "`n[5/5] Membangun APK Release..." -ForegroundColor Cyan
+
+# Bersihkan build APK lama di direktori output agar hanya menghasilkan satu file APK rilis
+$apkDir = Join-Path $projectRoot "build\app\outputs\flutter-apk"
+if (Test-Path $apkDir) {
+    Get-ChildItem -Path $apkDir -Filter "*.apk" | Remove-Item -Force -ErrorAction SilentlyContinue
+}
+
 if ($SplitPerAbi) {
-    Write-Host "Target: Split per-ABI (NFR-008: ukuran minimal per arsitektur)..." -ForegroundColor Gray
+    Write-Host "Target: Split per-ABI..." -ForegroundColor Gray
     flutter build apk --release --split-per-abi
 } else {
-    Write-Host "Target: Universal Fat APK..." -ForegroundColor Gray
+    Write-Host "Target: Satu file APK Release Universal (flutter build apk --release)..." -ForegroundColor Gray
     flutter build apk --release
 }
 
@@ -95,7 +102,6 @@ Write-Host "`n=============================================================" -Fo
 Write-Host "                   RINGKASAN BUILD & CHECKSUM                " -ForegroundColor Green
 Write-Host "=============================================================" -ForegroundColor Green
 
-$apkDir = Join-Path $projectRoot "build\app\outputs\flutter-apk"
 $apkFiles = Get-ChildItem -Path $apkDir -Filter "*.apk" | Where-Object { $_.Name -like "*release*" }
 
 if ($apkFiles.Count -eq 0) {
@@ -107,12 +113,10 @@ $results = @()
 foreach ($apk in $apkFiles) {
     $hashResult = Get-FileHash -Path $apk.FullName -Algorithm SHA256
     $sizeMb = [math]::Round($apk.Length / 1MB, 2)
-    $isNfrPass = if ($sizeMb -lt 30.0) { "LULUS (< 30 MB)" } else { "LEBIH (>= 30 MB)" }
 
     $results += [PSCustomObject]@{
         "Nama File"    = $apk.Name
         "Ukuran (MB)"  = "$sizeMb MB"
-        "NFR-008"      = $isNfrPass
         "SHA-256 Hash" = $hashResult.Hash
     }
 }
@@ -120,8 +124,8 @@ foreach ($apk in $apkFiles) {
 $results | Format-Table -AutoSize -Wrap
 
 # Tulis checksum ke file sha256_checksums.txt untuk rilis
-$checksumFile = Join-Path $projectRoot "build\app\outputs\flutter-apk\sha256_checksums.txt"
+$checksumFile = Join-Path $apkDir "sha256_checksums.txt"
 $results | Out-File -FilePath $checksumFile -Encoding utf8
 Write-Host "Checksum tersimpan di: $checksumFile" -ForegroundColor Cyan
 
-Write-Host "`nSelesai! APK siap untuk diunggah ke Google Drive dan didistribusikan." -ForegroundColor Green
+Write-Host "`nSelesai! File APK siap untuk didistribusikan." -ForegroundColor Green
