@@ -7,6 +7,7 @@ import 'package:timerin/core/theme/app_typography.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
 import 'package:timerin/features/home/presentation/home_screen.dart';
 import 'package:timerin/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:timerin/features/settings/presentation/privacy_policy_screen.dart';
 
 /// SCR-003 Masuk: Login dengan Google dan persetujuan Kebijakan Privasi.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -54,58 +55,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  void _showPrivacyPolicyDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: const RoundedRectangleBorder(
-            borderRadius: AppRadius.cardRadius,
-          ),
-          title: const Text(
-            'Kebijakan Privasi Timerin',
-            style: AppTypography.title20,
-          ),
-          content: const SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  'Timerin berkomitmen penuh menjaga privasi dan keamanan data Anda sesuai dengan UU Perlindungan Data Pribadi (UU PDP).',
-                  style: AppTypography.body14,
-                  textAlign: TextAlign.justify,
-                ),
-                AppSpacing.gapH12,
-                Text(
-                  '1. Keamanan Akun Google\nProses autentikasi menggunakan Google Sign-In resmi. Aplikasi hanya menerima nama, email, UID, dan foto profil. Aplikasi tidak pernah memiliki akses ke kata sandi akun Google Anda.',
-                  style: AppTypography.body14,
-                  textAlign: TextAlign.justify,
-                ),
-                AppSpacing.gapH12,
-                Text(
-                  '2. Tanpa Akses Layar & Data Game\nTimerin adalah overlay timer utilitas independen. Aplikasi tidak membaca layar game, memori game, atau aktivitas aplikasi lain di ponsel.',
-                  style: AppTypography.body14,
-                  textAlign: TextAlign.justify,
-                ),
-                AppSpacing.gapH12,
-                Text(
-                  '3. Penggunaan Data\nData akun semata-mata digunakan untuk identitas profil dan pencatatan masa aktif langganan Anda secara aman di server Firebase.',
-                  style: AppTypography.body14,
-                  textAlign: TextAlign.justify,
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Tutup'),
-            ),
-          ],
-        );
-      },
+  void _navigateToPrivacyPolicy() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const PrivacyPolicyScreen()),
     );
   }
 
@@ -177,55 +129,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  // Jaminan Keamanan & Privasi Akun
-                  Container(
-                    padding: AppSpacing.p12,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceVariant,
-                      borderRadius: AppRadius.buttonRadius,
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            const Icon(
-                              Icons.verified_user_outlined,
-                              size: 18.0,
-                              color: AppColors.accent,
-                            ),
-                            AppSpacing.gapW8,
-                            Text(
-                              'Jaminan Keamanan Akun & Privasi',
-                              style: AppTypography.caption12.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        AppSpacing.gapH4,
-                        Text(
-                          '• Masuk Google resmi & terenkripsi: akun aman dan kata sandi Anda tidak dapat diakses aplikasi.\n• Timerin 100% aman: tidak membaca layar game, pesan, atau data sensitif di HP Anda.\n• Data hanya untuk identitas profil & masa aktif langganan.',
-                          style: AppTypography.caption12.copyWith(
-                            color: AppColors.text,
-                            height: 1.35,
-                          ),
-                          textAlign: TextAlign.justify,
-                        ),
-                      ],
-                    ),
-                  ),
-                  AppSpacing.gapH16,
-
-                  // Google Sign-In Button
+                  // 1. Tombol Masuk dengan Google
                   ElevatedButton(
+                    key: const Key('google_sign_in_button'),
                     onPressed: _isLoading ? null : _handleGoogleSignIn,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.surfaceVariant,
-                      foregroundColor: AppColors.text,
-                      side: const BorderSide(color: AppColors.border),
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.textOnPrimary,
+                      minimumSize: const Size.fromHeight(48.0),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadius.buttonRadius,
+                      ),
+                      elevation: 2.0,
                     ),
                     child: _isLoading
                         ? const SizedBox(
@@ -234,7 +149,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.primary,
+                                AppColors.textOnPrimary,
                               ),
                             ),
                           )
@@ -244,13 +159,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               const Icon(
                                 Icons.g_mobiledata,
                                 size: 30.0,
-                                color: AppColors.primary,
+                                color: AppColors.textOnPrimary,
                               ),
                               AppSpacing.gapW8,
                               Text(
                                 'Masuk dengan Google',
                                 style: AppTypography.button16.copyWith(
-                                  color: AppColors.text,
+                                  color: AppColors.textOnPrimary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -259,8 +174,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   AppSpacing.gapH12,
 
-                  // Tombol Akses Panduan / Onboarding Aplikasi
-                  OutlinedButton.icon(
+                  // 2. Tombol Akses Panduan & Fitur Onboarding
+                  ElevatedButton.icon(
                     key: const Key('view_onboarding_button'),
                     onPressed: _isLoading
                         ? null
@@ -273,20 +188,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           },
                     icon: const Icon(Icons.help_outline_rounded, size: 18.0),
                     label: const Text('Halaman Panduan & Fitur'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.textOnPrimary,
+                      minimumSize: const Size.fromHeight(48.0),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadius.buttonRadius,
+                      ),
+                      elevation: 2.0,
+                    ),
                   ),
                   AppSpacing.gapH12,
 
-                  // Privacy Policy Notice & Dialog Trigger
-                  GestureDetector(
-                    key: const Key('login_privacy_policy_link'),
-                    onTap: _showPrivacyPolicyDialog,
-                    child: Text(
-                      'Dengan masuk, kamu menyetujui Kebijakan Privasi Timerin.\n(Ketuk untuk membaca ringkasan privasi lengkap)',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.caption12.copyWith(
-                        color: AppColors.textMuted,
-                        height: 1.4,
+                  // 3. Tombol Kebijakan Privasi
+                  ElevatedButton.icon(
+                    key: const Key('login_privacy_policy_button'),
+                    onPressed: _isLoading ? null : _navigateToPrivacyPolicy,
+                    icon: const Icon(Icons.shield_outlined, size: 18.0),
+                    label: const Text('Kebijakan Privasi'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.textOnPrimary,
+                      minimumSize: const Size.fromHeight(48.0),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadius.buttonRadius,
                       ),
+                      elevation: 2.0,
+                    ),
+                  ),
+                  AppSpacing.gapH12,
+
+                  // Catatan Persetujuan Kebijakan Privasi
+                  Text(
+                    'Dengan masuk, kamu menyetujui Kebijakan Privasi Timerin.',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.caption12.copyWith(
+                      color: AppColors.textMuted,
+                      height: 1.4,
                     ),
                   ),
                 ],

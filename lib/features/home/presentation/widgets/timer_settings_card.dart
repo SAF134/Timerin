@@ -7,6 +7,7 @@ import 'package:timerin/core/theme/app_typography.dart';
 import 'package:timerin/data/models/timer_settings_model.dart';
 import 'package:timerin/data/repositories/timer_settings_repository.dart';
 import 'package:timerin/features/overlay/presentation/overlay_container.dart';
+import 'package:timerin/features/overlay/services/vibration_service.dart';
 
 /// Kartu pengaturan konfigurasi timer overlay beserta pratinjau langsung (SCR-004, FR-005..FR-009, FR-018).
 class TimerSettingsCard extends ConsumerWidget {
@@ -21,10 +22,12 @@ class TimerSettingsCard extends ConsumerWidget {
     int timerIndex,
     int currentDuration,
   ) {
-    int selectedValue = currentDuration.clamp(
-      TimerDurationPresets.minCustomSeconds,
-      TimerDurationPresets.maxCustomSeconds,
-    );
+    int selectedValue = currentDuration > 0
+        ? currentDuration.clamp(
+            TimerDurationPresets.minCustomSeconds,
+            TimerDurationPresets.maxCustomSeconds,
+          )
+        : 60;
 
     showDialog<void>(
       context: context,
@@ -272,47 +275,15 @@ class TimerSettingsCard extends ConsumerWidget {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              PopupMenuButton<int>(
+                              InkWell(
                                 key: Key('timer_duration_dropdown_$index'),
-                                initialValue: duration,
-                                onSelected: (selectedSec) {
-                                  if (selectedSec == -1) {
-                                    _showCustomDurationDialog(
-                                      context,
-                                      ref,
-                                      index,
-                                      duration,
-                                    );
-                                  } else {
-                                    notifier.setTimerDuration(
-                                      index,
-                                      selectedSec,
-                                    );
-                                  }
-                                },
-                                itemBuilder: (context) => <PopupMenuEntry<int>>[
-                                  const PopupMenuItem<int>(
-                                    value: 30,
-                                    child: Text('30 detik'),
-                                  ),
-                                  const PopupMenuItem<int>(
-                                    value: 60,
-                                    child: Text('1 menit (60 dtk)'),
-                                  ),
-                                  const PopupMenuItem<int>(
-                                    value: 120,
-                                    child: Text('2 menit (120 dtk)'),
-                                  ),
-                                  const PopupMenuItem<int>(
-                                    value: 180,
-                                    child: Text('3 menit (180 dtk)'),
-                                  ),
-                                  const PopupMenuDivider(),
-                                  const PopupMenuItem<int>(
-                                    value: -1,
-                                    child: Text('Kustom'),
-                                  ),
-                                ],
+                                onTap: () => _showCustomDurationDialog(
+                                  context,
+                                  ref,
+                                  index,
+                                  duration,
+                                ),
+                                borderRadius: AppRadius.buttonRadius,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 12.0,
@@ -337,9 +308,9 @@ class TimerSettingsCard extends ConsumerWidget {
                                       ),
                                       AppSpacing.gapW4,
                                       const Icon(
-                                        Icons.arrow_drop_down,
-                                        size: 20.0,
-                                        color: AppColors.textMuted,
+                                        Icons.edit_outlined,
+                                        size: 16.0,
+                                        color: AppColors.primary,
                                       ),
                                     ],
                                   ),
@@ -494,56 +465,239 @@ class TimerSettingsCard extends ConsumerWidget {
                         key: const Key('vibration_switch'),
                         value: settings.isVibrationEnabled,
                         activeTrackColor: AppColors.primary,
-                        onChanged: (val) {
-                          notifier.setVibrationEnabled(val);
+                        onChanged: (val) async {
+                          if (val) {
+                            final isHapticEnabled =
+                                await VibrationService.isHapticFeedbackEnabled();
+                            if (!isHapticEnabled && context.mounted) {
+                              await showDialog<void>(
+                                context: context,
+                                builder: (dialogContext) {
+                                  return AlertDialog(
+                                    backgroundColor: AppColors.surface,
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: AppRadius.cardRadius,
+                                    ),
+                                    title: const Text(
+                                      'Umpan Balik Haptik Belum Aktif',
+                                      style: AppTypography.title20,
+                                    ),
+                                    content: const Text(
+                                      'Fitur getaran memerlukan pengaturan umpan balik haptik aktif pada perangkat Anda agar getaran dapat berfungsi saat timer habis. Silakan aktifkan di Pengaturan Suara & Getaran sistem.',
+                                      style: AppTypography.body14,
+                                      textAlign: TextAlign.justify,
+                                    ),
+                                    actionsPadding: const EdgeInsets.fromLTRB(
+                                      20.0,
+                                      0.0,
+                                      20.0,
+                                      20.0,
+                                    ),
+                                    actions: <Widget>[
+                                      Row(
+                                        children: <Widget>[
+                                          Expanded(
+                                            child: OutlinedButton(
+                                              onPressed: () => Navigator.of(
+                                                dialogContext,
+                                              ).pop(),
+                                              style: OutlinedButton.styleFrom(
+                                                minimumSize:
+                                                    const Size.fromHeight(44.0),
+                                                shape:
+                                                    const RoundedRectangleBorder(
+                                                      borderRadius: AppRadius
+                                                          .buttonRadius,
+                                                    ),
+                                              ),
+                                              child: const Text('Batal'),
+                                            ),
+                                          ),
+                                          AppSpacing.gapW12,
+                                          Expanded(
+                                            child: ElevatedButton(
+                                              onPressed: () {
+                                                Navigator.of(
+                                                  dialogContext,
+                                                ).pop();
+                                                VibrationService.openHapticSettings();
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    AppColors.primary,
+                                                foregroundColor:
+                                                    AppColors.textOnPrimary,
+                                                minimumSize:
+                                                    const Size.fromHeight(44.0),
+                                                shape:
+                                                    const RoundedRectangleBorder(
+                                                      borderRadius: AppRadius
+                                                          .buttonRadius,
+                                                    ),
+                                                elevation: 0,
+                                              ),
+                                              child: const Text('Buka Setelan'),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                              return;
+                            }
+                          }
+                          await notifier.setVibrationEnabled(val);
                         },
                       ),
                     ],
                   ),
                   AppSpacing.gapH16,
 
-                  // 7. Panduan Ketukan Overlay
-                  Container(
-                    padding: AppSpacing.p12,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceVariant,
-                      borderRadius: AppRadius.buttonRadius,
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        const Icon(
-                          Icons.touch_app_outlined,
-                          size: 20.0,
-                          color: AppColors.primary,
-                        ),
-                        AppSpacing.gapW8,
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  // 7. Panduan Ketukan Overlay (Terpisah 1x & 2x)
+                  Row(
+                    children: <Widget>[
+                      // Kartu Kiri: Ketuk 1x (Mulai)
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0,
+                            vertical: 12.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceVariant,
+                            borderRadius: AppRadius.cardRadius,
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
                             children: <Widget>[
-                              Text(
-                                'Panduan Ketukan Overlay',
-                                style: AppTypography.caption12.copyWith(
-                                  fontWeight: FontWeight.w700,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6.0,
+                                  vertical: 4.0,
+                                ),
+                                decoration: const BoxDecoration(
                                   color: AppColors.primary,
+                                  borderRadius: AppRadius.buttonRadius,
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.touch_app_rounded,
+                                      size: 15.0,
+                                      color: AppColors.textOnPrimary,
+                                    ),
+                                    SizedBox(width: 2.0),
+                                    Text(
+                                      '1X',
+                                      style: TextStyle(
+                                        color: AppColors.textOnPrimary,
+                                        fontSize: 10.0,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              AppSpacing.gapH4,
-                              Text(
-                                '• Ketuk 1x: Memulai hitung mundur timer.\n• Ketuk 2x: Mereset timer kembali ke durasi awal.',
-                                style: AppTypography.caption12.copyWith(
-                                  color: AppColors.text,
-                                  height: 1.35,
+                              AppSpacing.gapW8,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      'Ketuk 1x',
+                                      style: AppTypography.caption12.copyWith(
+                                        color: AppColors.textMuted,
+                                        fontSize: 11.0,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Mulai',
+                                      style: AppTypography.body14.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                textAlign: TextAlign.justify,
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      AppSpacing.gapW12,
+                      // Kartu Kanan: Ketuk 2x (Reset)
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0,
+                            vertical: 12.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceVariant,
+                            borderRadius: AppRadius.cardRadius,
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
+                            children: <Widget>[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6.0,
+                                  vertical: 4.0,
+                                ),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: AppRadius.buttonRadius,
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.touch_app_rounded,
+                                      size: 15.0,
+                                      color: AppColors.textOnPrimary,
+                                    ),
+                                    SizedBox(width: 2.0),
+                                    Text(
+                                      '2X',
+                                      style: TextStyle(
+                                        color: AppColors.textOnPrimary,
+                                        fontSize: 10.0,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              AppSpacing.gapW8,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      'Ketuk 2x',
+                                      style: AppTypography.caption12.copyWith(
+                                        color: AppColors.textMuted,
+                                        fontSize: 11.0,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Reset',
+                                      style: AppTypography.body14.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -585,6 +739,40 @@ class TimerSettingsCard extends ConsumerWidget {
                   isInteractive: false,
                 ),
               ),
+            ),
+          ),
+          AppSpacing.gapH24,
+
+          // 9. Tombol Simpan Pengaturan Overlay
+          ElevatedButton.icon(
+            key: const Key('save_timer_settings_button'),
+            onPressed: isLocked
+                ? null
+                : () async {
+                    await notifier.updateSettings(settings);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Pengaturan overlay berhasil disimpan.',
+                            ),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                    }
+                  },
+            icon: const Icon(Icons.save_outlined),
+            label: const Text('Simpan Pengaturan Overlay'),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48.0),
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textOnPrimary,
+              shape: const RoundedRectangleBorder(
+                borderRadius: AppRadius.buttonRadius,
+              ),
+              elevation: 2.0,
             ),
           ),
         ],

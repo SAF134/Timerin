@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:timerin/core/services/url_launcher_service.dart';
 import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
 import 'package:timerin/core/theme/app_spacing.dart';
 import 'package:timerin/core/theme/app_typography.dart';
 
 /// Halaman Informasi Tentang Pengembang, Kontak, & Dukungan QRIS.
-class AboutDeveloperScreen extends StatelessWidget {
+class AboutDeveloperScreen extends ConsumerWidget {
   const AboutDeveloperScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(title: const Text('Tentang Pengembang')),
@@ -155,35 +157,31 @@ class AboutDeveloperScreen extends StatelessWidget {
                       ),
                       textAlign: TextAlign.justify,
                     ),
-                    AppSpacing.gapH8,
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12.0,
-                        vertical: 10.0,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant,
-                        borderRadius: AppRadius.buttonRadius,
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: <Widget>[
-                          const Icon(
-                            Icons.email_rounded,
-                            size: 18.0,
-                            color: AppColors.primary,
+                    AppSpacing.gapH12,
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        key: const Key('developer_email_button'),
+                        onPressed: () {
+                          ref
+                              .read(urlLauncherServiceProvider)
+                              .launchEmail(
+                                recipient: 'timerindev@gmail.com',
+                                subject: 'Tanya Pengembang Timerin',
+                                body: 'Halo Pengembang Timerin,\n\n',
+                              );
+                        },
+                        icon: const Icon(Icons.email_rounded, size: 18.0),
+                        label: const Text('timerindev@gmail.com'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textOnPrimary,
+                          minimumSize: const Size.fromHeight(48.0),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: AppRadius.buttonRadius,
                           ),
-                          AppSpacing.gapW8,
-                          Expanded(
-                            child: SelectableText(
-                              'timerindev@gmail.com',
-                              style: AppTypography.body14.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
+                          elevation: 2.0,
+                        ),
                       ),
                     ),
                   ],

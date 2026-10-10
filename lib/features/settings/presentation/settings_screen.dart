@@ -13,7 +13,9 @@ import 'package:timerin/data/repositories/privacy_mode_repository.dart';
 import 'package:timerin/features/auth/presentation/login_screen.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
+import 'package:timerin/features/overlay/services/vibration_service.dart';
 import 'package:timerin/features/settings/presentation/about_developer_screen.dart';
+import 'package:timerin/features/settings/presentation/privacy_policy_screen.dart';
 import 'package:timerin/features/subscription/domain/access_state.dart';
 import 'package:timerin/features/subscription/presentation/subscription_screen.dart';
 import 'package:timerin/features/subscription/services/access_service.dart';
@@ -41,6 +43,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     with WidgetsBindingObserver {
   bool _isPermissionGranted = false;
   bool _isLoadingPermission = true;
+  bool _isHapticGranted = false;
+  bool _isLoadingHaptic = true;
   bool _isCheckingUpdate = false;
 
   @override
@@ -64,13 +68,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   }
 
   Future<void> _checkPermission() async {
-    final granted = await ref
-        .read(overlayPermissionServiceProvider)
-        .isOverlayPermissionGranted();
+    bool granted = false;
+    bool hapticGranted = true;
+    try {
+      granted = await ref
+          .read(overlayPermissionServiceProvider)
+          .isOverlayPermissionGranted();
+    } catch (_) {}
+    try {
+      hapticGranted = await VibrationService.isHapticFeedbackEnabled();
+    } catch (_) {}
     if (mounted) {
       setState(() {
         _isPermissionGranted = granted;
         _isLoadingPermission = false;
+        _isHapticGranted = hapticGranted;
+        _isLoadingHaptic = false;
       });
     }
   }
@@ -155,60 +168,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     }
   }
 
-  void _showPrivacyPolicyDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: const RoundedRectangleBorder(
-            borderRadius: AppRadius.cardRadius,
-          ),
-          title: const Text(
-            'Kebijakan Privasi Timerin',
-            style: AppTypography.title20,
-          ),
-          content: const SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  'Timerin berkomitmen menjaga privasi dan keamanan data Anda selaras dengan UU Perlindungan Data Pribadi (UU PDP).',
-                  style: AppTypography.body14,
-                  textAlign: TextAlign.justify,
-                ),
-                AppSpacing.gapH12,
-                Text(
-                  '1. Data yang Dikumpulkan:\n'
-                  '- Akun Google: Nama tampilan dan alamat email.\n'
-                  '- Pengenal Pengguna: UID Firebase.\n'
-                  '- Waktu Server: Timestamp trial dan langganan.\n'
-                  '- Crash Report: Diagnostik anonim jika terjadi kendala.',
-                  style: AppTypography.caption12,
-                  textAlign: TextAlign.justify,
-                ),
-                AppSpacing.gapH8,
-                Text(
-                  '2. Keamanan Game & Overlay:\n'
-                  'Timerin TIDAK membaca layar, konten permainan, maupun data internal Mobile Legends. Overlay hanya berupa utilitas hitung mundur mengambang mandiri.',
-                  style: AppTypography.caption12,
-                  textAlign: TextAlign.justify,
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Tutup'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final authUser = ref.watch(authServiceProvider).currentUser;
@@ -252,7 +211,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               _buildOverlayPermissionCard(),
               AppSpacing.gapH16,
 
-              // 4. Informasi Aplikasi & Kebijakan Privasi
+              // 4. Status Izin Umpan Balik Haptik
+              _buildHapticFeedbackCard(),
+              AppSpacing.gapH16,
+
+              // 5. Informasi Aplikasi & Kebijakan Privasi
               _buildAppInfoCard(),
               AppSpacing.gapH24,
 
@@ -263,7 +226,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 icon: const Icon(Icons.logout_rounded),
                 label: const Text('Keluar dari Akun'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.error,
                   foregroundColor: AppColors.textOnPrimary,
                   shape: const RoundedRectangleBorder(
                     borderRadius: AppRadius.buttonRadius,
@@ -627,6 +590,93 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     );
   }
 
+  Widget _buildHapticFeedbackCard() {
+    return Container(
+      padding: AppSpacing.p24,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadius.cardRadius,
+        border: Border.all(color: AppColors.primary, width: 1.0),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 16.0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              const Text(
+                'Izin Umpan Balik Haptik',
+                style: AppTypography.title20,
+              ),
+              if (_isLoadingHaptic)
+                const SizedBox(
+                  width: 14.0,
+                  height: 14.0,
+                  child: CircularProgressIndicator(strokeWidth: 2.0),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10.0,
+                    vertical: 4.0,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _isHapticGranted
+                        ? AppColors.accent.withValues(alpha: 0.1)
+                        : AppColors.warning.withValues(alpha: 0.1),
+                    borderRadius: AppRadius.buttonRadius,
+                  ),
+                  child: Text(
+                    _isHapticGranted ? 'Diizinkan' : 'Belum Diizinkan',
+                    style: AppTypography.caption12.copyWith(
+                      color: _isHapticGranted
+                          ? AppColors.primary
+                          : AppColors.warning,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          AppSpacing.gapH8,
+          const Text(
+            'Pengaturan getaran/umpan balik haptik sistem diperlukan agar perangkat dapat bergetar saat hitung mundur spell selesai.',
+            style: AppTypography.body14Muted,
+            textAlign: TextAlign.justify,
+          ),
+          AppSpacing.gapH16,
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              key: const Key('open_haptic_settings_button'),
+              onPressed: () async {
+                await VibrationService.openHapticSettings();
+                await _checkPermission();
+              },
+              icon: const Icon(Icons.vibration_rounded, size: 18.0),
+              label: const Text('Buka Setelan Suara & Getaran'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadius.buttonRadius,
+                ),
+                elevation: 2.0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAppInfoCard() {
     return Container(
       padding: AppSpacing.p24,
@@ -710,7 +760,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           AppSpacing.gapH12,
           InkWell(
             key: const Key('privacy_policy_tile'),
-            onTap: _showPrivacyPolicyDialog,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const PrivacyPolicyScreen(),
+                ),
+              );
+            },
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[

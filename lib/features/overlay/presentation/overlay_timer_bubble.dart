@@ -124,20 +124,20 @@ class _OverlayTimerBubbleState extends State<OverlayTimerBubble> {
     }
   }
 
-  /// Denyut getaran perangkat 2–3 detik memberi sinyal spell musuh ready.
+  /// Denyut getaran perangkat 1 detik memberi sinyal spell musuh ready.
   void _startSpellReadyVibration() {
     _stopVibration();
     if (!widget.isVibrationEnabled) return;
 
-    // 1. Getaran perangkat keras native via Android Vibrator (2.4 detik)
-    VibrationService.vibrate(durationMs: 2400);
+    // 1. Getaran perangkat keras native via Android Vibrator (1 detik)
+    VibrationService.vibrate(durationMs: 1000);
 
     // 2. Siarkan sinyal selesai ke aplikasi utama jika berjalan di overlay window
     try {
       FlutterOverlayWindow.shareData('TIMER_FINISHED').catchError((_) => null);
     } catch (_) {}
 
-    // 3. Denyut haptic feedback sebagai pelengkap
+    // 3. Denyut haptic feedback sebagai pelengkap selama 1 detik
     int pulseCount = 0;
     try {
       HapticFeedback.vibrate();
@@ -152,7 +152,7 @@ class _OverlayTimerBubbleState extends State<OverlayTimerBubble> {
         HapticFeedback.vibrate();
         HapticFeedback.heavyImpact();
       } catch (_) {}
-      if (pulseCount >= 12 || !mounted) {
+      if (pulseCount >= 5 || !mounted) {
         timer.cancel();
         _vibrationTimer = null;
       }

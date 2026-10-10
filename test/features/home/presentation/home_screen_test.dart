@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -98,6 +99,18 @@ void main() {
         currentVersionName: '1.0.0',
       ),
     );
+
+    const vibrationChannel = MethodChannel('com.timerin.app/vibration');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(vibrationChannel, (MethodCall call) async {
+          return true;
+        });
+  });
+
+  tearDown(() {
+    const vibrationChannel = MethodChannel('com.timerin.app/vibration');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(vibrationChannel, null);
   });
 
   Widget createWidgetUnderTest({
@@ -368,33 +381,24 @@ void main() {
             find.text(
               'Overlay aktif. Ketuk 1x untuk mulai timer, ketuk 2x untuk reset.',
             ),
-            findsOneWidget,
+            findsNothing,
           );
         },
       );
 
-      testWidgets('tapping privacy toggle button masks and unmasks user info', (
-        WidgetTester tester,
-      ) async {
-        await tester.pumpWidget(createWidgetUnderTest());
-        await tester.pump();
+      testWidgets(
+        'privacy toggle eye button is not on HomeScreen (configured in Settings only)',
+        (WidgetTester tester) async {
+          await tester.pumpWidget(createWidgetUnderTest());
+          await tester.pump();
 
-        expect(find.text('raka@example.com'), findsOneWidget);
-        final toggleBtn = find.byKey(const Key('home_privacy_toggle_button'));
-        expect(toggleBtn, findsOneWidget);
-
-        await tester.tap(toggleBtn);
-        await tester.pumpAndSettle();
-
-        expect(find.text('****'), findsOneWidget);
-        expect(find.text('raka@example.com'), findsNothing);
-
-        // Tap again to unmask
-        await tester.tap(toggleBtn);
-        await tester.pumpAndSettle();
-
-        expect(find.text('raka@example.com'), findsOneWidget);
-      });
+          expect(find.text('raka@example.com'), findsOneWidget);
+          expect(
+            find.byKey(const Key('home_privacy_toggle_button')),
+            findsNothing,
+          );
+        },
+      );
 
       testWidgets(
         'tapping Matikan Overlay calls stopOverlay and reverts status to inactive',

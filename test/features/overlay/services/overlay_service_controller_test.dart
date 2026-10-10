@@ -16,6 +16,7 @@ void main() {
   late List<MethodCall> methodCalls;
 
   const channel = MethodChannel('x-slayer/overlay_channel');
+  const vibrationChannel = MethodChannel('com.timerin.app/vibration');
 
   setUp(() {
     mockPermissionService = MockOverlayPermissionService();
@@ -38,11 +39,18 @@ void main() {
           }
           return null;
         });
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(vibrationChannel, (MethodCall call) async {
+          return true;
+        });
   });
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(vibrationChannel, null);
   });
 
   group('OverlayServiceController Tests (T-006 / FR-012, FR-019)', () {
@@ -80,6 +88,26 @@ void main() {
           () => mockPermissionService.requestNotificationPermission(),
         ).called(1);
         expect(methodCalls.where((c) => c.method == 'showOverlay'), isNotEmpty);
+      },
+    );
+
+    test(
+      'startOverlay passes center alignment and null startPosition by default',
+      () async {
+        when(
+          () => mockPermissionService.isOverlayPermissionGranted(),
+        ).thenAnswer((_) async => true);
+        when(
+          () => mockPermissionService.isNotificationPermissionGranted(),
+        ).thenAnswer((_) async => true);
+
+        await controller.startOverlay();
+
+        final showCall = methodCalls.firstWhere(
+          (c) => c.method == 'showOverlay',
+        );
+        expect(showCall.arguments['alignment'], 'center');
+        expect(showCall.arguments['startPosition'], isNull);
       },
     );
 

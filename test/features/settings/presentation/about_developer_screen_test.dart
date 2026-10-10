@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timerin/core/theme/app_theme.dart';
 import 'package:timerin/features/settings/presentation/about_developer_screen.dart';
@@ -9,9 +10,11 @@ void main() {
       'renders developer image, bio, contact, and QRIS, without security card',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.theme,
-            home: const AboutDeveloperScreen(),
+          ProviderScope(
+            child: MaterialApp(
+              theme: AppTheme.theme,
+              home: const AboutDeveloperScreen(),
+            ),
           ),
         );
         await tester.pump();
@@ -22,6 +25,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('Kontak Pengembang'), findsOneWidget);
+        expect(find.byKey(const Key('developer_email_button')), findsOneWidget);
         expect(find.text('timerindev@gmail.com'), findsOneWidget);
         expect(find.text('Dukung Pengembang'), findsOneWidget);
         expect(find.byType(Image), findsWidgets);

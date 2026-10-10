@@ -120,15 +120,11 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // Tap duration dropdown for Timer 1
+      // Tap duration button for Timer 1 (opens custom duration dialog directly)
       await tester.tap(find.byKey(const Key('timer_duration_dropdown_0')));
       await tester.pumpAndSettle();
 
-      // Tap custom option
-      await tester.tap(find.text('Kustom'));
-      await tester.pumpAndSettle();
-
-      // Dialog opens
+      // Dialog opens directly
       expect(find.text('Durasi Timer 1'), findsOneWidget);
       expect(find.text('Batal'), findsOneWidget);
       expect(find.text('Simpan'), findsOneWidget);
@@ -141,6 +137,27 @@ void main() {
       // Dialog dismissed
       expect(find.text('Durasi Timer 1'), findsNothing);
     });
+
+    testWidgets(
+      'tapping Simpan Pengaturan Overlay saves settings and shows snackbar',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
+
+        final saveBtn = find.byKey(const Key('save_timer_settings_button'));
+        expect(saveBtn, findsOneWidget);
+
+        await tester.ensureVisible(saveBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(saveBtn);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Pengaturan overlay berhasil disimpan.'),
+          findsOneWidget,
+        );
+      },
+    );
 
     testWidgets('Posisi Overlay section is not rendered on UI (Item 11)', (
       WidgetTester tester,
@@ -196,6 +213,20 @@ void main() {
       },
     );
 
+    testWidgets('renders separated tap guide cards for 1x Mulai and 2x Reset', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ketuk 1x'), findsOneWidget);
+      expect(find.text('Mulai'), findsOneWidget);
+      expect(find.text('1X'), findsOneWidget);
+      expect(find.text('Ketuk 2x'), findsOneWidget);
+      expect(find.text('Reset'), findsOneWidget);
+      expect(find.text('2X'), findsOneWidget);
+    });
+
     testWidgets(
       'toggling vibration switch updates isVibrationEnabled in repository',
       (WidgetTester tester) async {
@@ -203,7 +234,6 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Getar Saat Timer Habis'), findsOneWidget);
-        expect(find.text('Panduan Ketukan Overlay'), findsOneWidget);
 
         final switchFinder = find.byKey(const Key('vibration_switch'));
         expect(switchFinder, findsOneWidget);

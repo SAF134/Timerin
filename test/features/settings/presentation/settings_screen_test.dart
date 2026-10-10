@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timerin/core/services/app_update_service.dart';
 import 'package:timerin/core/services/url_launcher_service.dart';
+import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_theme.dart';
 import 'package:timerin/data/models/user_model.dart';
 import 'package:timerin/data/repositories/onboarding_repository.dart';
@@ -14,6 +16,7 @@ import 'package:timerin/features/auth/presentation/login_screen.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
 import 'package:timerin/features/settings/presentation/about_developer_screen.dart';
+import 'package:timerin/features/settings/presentation/privacy_policy_screen.dart';
 import 'package:timerin/features/settings/presentation/settings_screen.dart';
 import 'package:timerin/features/subscription/domain/access_state.dart';
 import 'package:timerin/features/subscription/presentation/subscription_screen.dart';
@@ -90,6 +93,18 @@ void main() {
         currentVersionName: '1.0.0',
       ),
     );
+
+    const vibrationChannel = MethodChannel('com.timerin.app/vibration');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(vibrationChannel, (MethodCall call) async {
+          return true;
+        });
+  });
+
+  tearDown(() {
+    const vibrationChannel = MethodChannel('com.timerin.app/vibration');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(vibrationChannel, null);
   });
 
   Widget createWidgetUnderTest({
@@ -177,7 +192,7 @@ void main() {
       },
     );
 
-    testWidgets('tapping Kebijakan Privasi opens dialog and Tutup closes it', (
+    testWidgets('tapping Kebijakan Privasi navigates to PrivacyPolicyScreen', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(createWidgetUnderTest());
@@ -189,13 +204,36 @@ void main() {
       await tester.tap(privacyTile);
       await tester.pumpAndSettle();
 
-      expect(find.text('Kebijakan Privasi Timerin'), findsOneWidget);
-      expect(find.text('Buka di Browser'), findsNothing);
+      expect(find.byType(PrivacyPolicyScreen), findsOneWidget);
+      expect(find.text('Komitmen Privasi & Keamanan'), findsOneWidget);
+    });
 
-      await tester.tap(find.text('Tutup'));
+    testWidgets('renders haptic feedback card and open settings button', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('Kebijakan Privasi Timerin'), findsNothing);
+      expect(find.text('Izin Umpan Balik Haptik'), findsOneWidget);
+      expect(
+        find.byKey(const Key('open_haptic_settings_button')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('settings_logout_button has error (red) background color', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      final btn = tester.widget<ElevatedButton>(
+        find.byKey(const Key('settings_logout_button')),
+      );
+      expect(
+        btn.style?.backgroundColor?.resolve(<WidgetState>{}),
+        AppColors.error,
+      );
     });
 
     testWidgets(

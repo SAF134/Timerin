@@ -10,6 +10,7 @@ import 'package:timerin/features/auth/presentation/login_screen.dart';
 import 'package:timerin/features/auth/services/auth_service.dart';
 import 'package:timerin/features/home/presentation/home_screen.dart';
 import 'package:timerin/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:timerin/features/settings/presentation/privacy_policy_screen.dart';
 
 class MockAuthService extends Mock implements AuthService {}
 
@@ -45,7 +46,9 @@ void main() {
 
       expect(find.text('Masuk ke Timerin'), findsOneWidget);
       expect(find.text('Masuk dengan Google'), findsOneWidget);
-      expect(find.text('Jaminan Keamanan Akun & Privasi'), findsOneWidget);
+      expect(find.text('Halaman Panduan & Fitur'), findsOneWidget);
+      expect(find.text('Kebijakan Privasi'), findsOneWidget);
+      expect(find.text('Jaminan Keamanan Akun & Privasi'), findsNothing);
       expect(
         find.textContaining(
           'Dengan masuk, kamu menyetujui Kebijakan Privasi Timerin',
@@ -119,26 +122,20 @@ void main() {
     );
 
     testWidgets(
-      'tapping privacy policy link opens AlertDialog with privacy details',
+      'tapping privacy policy button navigates to PrivacyPolicyScreen',
       (WidgetTester tester) async {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(createWidgetUnderTest(prefs));
 
-        final privacyLink = find.byKey(const Key('login_privacy_policy_link'));
-        expect(privacyLink, findsOneWidget);
+        final privacyBtn = find.byKey(const Key('login_privacy_policy_button'));
+        expect(privacyBtn, findsOneWidget);
 
-        await tester.tap(privacyLink);
+        await tester.tap(privacyBtn);
         await tester.pumpAndSettle();
 
-        expect(find.byType(AlertDialog), findsOneWidget);
-        expect(find.text('Kebijakan Privasi Timerin'), findsOneWidget);
-
-        // Tap Tutup to dismiss
-        await tester.tap(find.text('Tutup'));
-        await tester.pumpAndSettle();
-
-        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(PrivacyPolicyScreen), findsOneWidget);
+        expect(find.text('Komitmen Privasi & Keamanan'), findsOneWidget);
       },
     );
   });

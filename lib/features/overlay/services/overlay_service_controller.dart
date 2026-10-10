@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timerin/data/models/timer_settings_model.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
+import 'package:timerin/features/overlay/services/vibration_service.dart';
 
 final overlayServiceControllerProvider = Provider<OverlayServiceController>((
   ref,
@@ -13,8 +15,25 @@ final overlayServiceControllerProvider = Provider<OverlayServiceController>((
 
 /// Notifier status aktifnya overlay di layar.
 class OverlayActiveNotifier extends Notifier<bool> {
+  StreamSubscription<dynamic>? _subscription;
+
   @override
-  bool build() => false;
+  bool build() {
+    _subscription?.cancel();
+    try {
+      _subscription = FlutterOverlayWindow.overlayListener.listen((data) {
+        if (data?.toString() == 'TIMER_FINISHED') {
+          VibrationService.vibrate(durationMs: 1000);
+        }
+      });
+    } catch (_) {}
+
+    ref.onDispose(() {
+      _subscription?.cancel();
+    });
+
+    return false;
+  }
 
   void setActive(bool active) {
     state = active;
@@ -87,7 +106,7 @@ class OverlayServiceController {
     TimerSettings? settings,
     int? height,
     int? width,
-    OverlayAlignment alignment = OverlayAlignment.topLeft,
+    OverlayAlignment alignment = OverlayAlignment.center,
     bool enableDrag = true,
   }) async {
     // 1. Verifikasi izin overlay
@@ -113,14 +132,14 @@ class OverlayServiceController {
     final finalHeight = height ?? effectiveDimensions.height;
 
     // 4. Hitung posisi awal tersimpan jika tersedia (FR-011, SCR-007)
-    // Berikan posisi awal aman (16, 160) agar tidak terpotong di status bar jika belum diatur
+    // Default null agar muncul di titik tengah perangkat menggunakan OverlayAlignment.center
     final startPos =
         (settings?.positionX != null &&
             settings?.positionY != null &&
             settings!.positionX! >= 0 &&
             settings.positionY! >= 0)
         ? OverlayPosition(settings.positionX!, settings.positionY!)
-        : const OverlayPosition(16.0, 160.0);
+        : null;
 
     // WindowManager Android memerlukan pixel fisik pada showOverlay
     final view = WidgetsBinding.instance.platformDispatcher.views.firstOrNull;
@@ -128,7 +147,10 @@ class OverlayServiceController {
     final widthPx = (finalWidth * pixelRatio).ceil();
     final heightPx = (finalHeight * pixelRatio).ceil();
 
-    // 5. Tampilkan overlay dengan foreground service dan notifikasi persisten
+    // 5. Inisialisasi binding getaran pada engine overlay
+    await VibrationService.initializeOverlayChannel();
+
+    // 6. Tampilkan overlay dengan foreground service dan notifikasi persisten
     await FlutterOverlayWindow.showOverlay(
       height: heightPx,
       width: widthPx,

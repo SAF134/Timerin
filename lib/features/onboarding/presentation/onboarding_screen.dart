@@ -42,13 +42,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       icon: Icons.layers_outlined,
       title: 'Izin Tampil di Atas Aplikasi',
       description:
-          'Timerin hanya butuh izin overlay untuk menampilkan widget floating timer. Kami tidak membaca layar atau data game kamu.',
+          'Timerin hanya butuh izin overlay untuk menampilkan floating timer di atas game. Kami tidak membaca layar atau data game Anda.',
+    ),
+    OnboardingItem(
+      icon: Icons.vibration_rounded,
+      title: 'Kontrol & Getaran Cerdas',
+      description:
+          'Ketuk 1x untuk mulai countdown, ketuk 2x untuk reset. Ponsel akan bergetar saat timer habis menandakan spell musuh telah siap.',
+    ),
+    OnboardingItem(
+      icon: Icons.tune_rounded,
+      title: 'Kustomisasi Sesuai Kebutuhan',
+      description:
+          'Atur 1 hingga 5 timer, susunan vertikal/horizontal, durasi kustom per timer, serta simpan pengaturan favorit Anda secara permanen.',
+    ),
+    OnboardingItem(
+      icon: Icons.verified_user_outlined,
+      title: '100% Aman & Tanpa Risiko Ban',
+      description:
+          'Aplikasi ini tidak memodifikasi game, tidak memakai AccessibilityService, dan tidak butuh root. Akun game Anda terjamin aman.',
     ),
     OnboardingItem(
       icon: Icons.card_giftcard_outlined,
       title: 'Coba Gratis 24 Jam',
       description:
-          'Trial gratis otomatis mulai saat overlay pertama kali kamu aktifkan. Setelah itu, langganan terjangkau Rp10.000/bulan.',
+          'Masa trial gratis aktif otomatis saat overlay pertama kali dibuka. Setelah itu, nikmati akses penuh hanya Rp10.000/bulan via QRIS.',
     ),
   ];
 

@@ -172,22 +172,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final success = await controller.startOverlay(settings: settings);
     if (success) {
       ref.read(overlayActiveProvider.notifier).setActive(true);
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Overlay aktif. Ketuk 1x untuk mulai timer, ketuk 2x untuk reset.',
-              ),
-              action: SnackBarAction(
-                label: 'Cek Izin',
-                textColor: AppColors.accent,
-                onPressed: () => OverlayPermissionDialog.show(context),
-              ),
-            ),
-          );
-      }
     }
   }
 
@@ -324,42 +308,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ],
                             ),
                             AppSpacing.gapH4,
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Expanded(
-                                  child: Text(
-                                    userModelAsync
-                                                .value
-                                                ?.displayName
-                                                .isNotEmpty ==
-                                            true
-                                        ? userModelAsync.value!.displayName
-                                        : authUser?.displayName ?? 'Pemain',
-                                    style: AppTypography.title20,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                IconButton(
-                                  key: const Key('home_privacy_toggle_button'),
-                                  icon: Icon(
-                                    isPrivacyMode
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
-                                    size: 20.0,
-                                    color: AppColors.primary,
-                                  ),
-                                  tooltip: isPrivacyMode
-                                      ? 'Tampilkan Info Akun'
-                                      : 'Sembunyikan Info Akun',
-                                  onPressed: () {
-                                    ref
-                                        .read(privacyModeProvider.notifier)
-                                        .toggle();
-                                  },
-                                ),
-                              ],
+                            Text(
+                              userModelAsync.value?.displayName.isNotEmpty ==
+                                      true
+                                  ? userModelAsync.value!.displayName
+                                  : authUser?.displayName ?? 'Pemain',
+                              style: AppTypography.title20,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             AppSpacing.gapH4,
                             Text(
@@ -410,51 +366,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 child: isOverlayActive
-                    ? Column(
-                        key: const Key('stop_overlay_column'),
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          OutlinedButton.icon(
-                            key: const Key('stop_overlay_button'),
-                            onPressed: _handleStopOverlay,
-                            icon: const Icon(Icons.stop_rounded),
-                            label: const Text('Matikan Overlay'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.error,
-                              side: const BorderSide(color: AppColors.error),
-                              minimumSize: const Size.fromHeight(48.0),
-                            ),
-                          ),
-                          AppSpacing.gapH8,
-                          GestureDetector(
-                            key: const Key('home_xiaomi_permission_guide'),
-                            onTap: () => OverlayPermissionDialog.show(context),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 4.0,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  const Icon(
-                                    Icons.help_outline_rounded,
-                                    size: 14.0,
-                                    color: AppColors.accent,
-                                  ),
-                                  AppSpacing.gapW4,
-                                  Text(
-                                    'Overlay belum muncul? Panduan izin Xiaomi',
-                                    style: AppTypography.caption12.copyWith(
-                                      color: AppColors.accent,
-                                      fontWeight: FontWeight.w600,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                    ? OutlinedButton.icon(
+                        key: const Key('stop_overlay_button'),
+                        onPressed: _handleStopOverlay,
+                        icon: const Icon(Icons.stop_rounded),
+                        label: const Text('Matikan Overlay'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          side: const BorderSide(color: AppColors.error),
+                          minimumSize: const Size.fromHeight(48.0),
+                        ),
                       )
                     : ElevatedButton.icon(
                         key: const Key('start_overlay_button'),
