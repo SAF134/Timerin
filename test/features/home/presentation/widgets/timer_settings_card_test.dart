@@ -40,6 +40,7 @@ void main() {
       expect(find.text('Format Waktu'), findsOneWidget);
       expect(find.text('Susunan Timer'), findsOneWidget);
       expect(find.text('Ukuran Overlay'), findsOneWidget);
+      expect(find.text('Transparansi Overlay'), findsOneWidget);
       expect(find.text('Durasi Tiap Timer'), findsOneWidget);
       expect(find.text('Pratinjau Overlay'), findsOneWidget);
 
@@ -112,6 +113,26 @@ void main() {
 
       final repo = TimerSettingsRepository(prefs: prefs);
       expect(repo.getSettings().scale, lessThan(1.0));
+    });
+
+    testWidgets('moving transparency slider updates background opacity', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      final sliderFinder = find.byKey(const Key('transparency_slider'));
+      expect(sliderFinder, findsOneWidget);
+
+      await tester.ensureVisible(sliderFinder);
+      await tester.pumpAndSettle();
+
+      // Drag slider
+      await tester.drag(sliderFinder, const Offset(-80.0, 0.0));
+      await tester.pumpAndSettle();
+
+      final repo = TimerSettingsRepository(prefs: prefs);
+      expect(repo.getSettings().backgroundOpacity, lessThan(0.85));
     });
 
     testWidgets('custom duration dialog allows updating duration to 5..600s', (

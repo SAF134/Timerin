@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:timerin/core/services/qris_share_service.dart';
 import 'package:timerin/core/services/url_launcher_service.dart';
 import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
@@ -21,36 +22,33 @@ class AboutDeveloperScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              // 1. Foto Pengembang (1:1 Ratio)
+              // 1. Foto Pengembang (Bulat / Circular Avatar)
               Center(
                 child: Container(
-                  width: 180.0,
-                  height: 180.0,
+                  width: 160.0,
+                  height: 160.0,
                   decoration: BoxDecoration(
                     color: AppColors.surfaceVariant,
-                    borderRadius: AppRadius.cardRadius,
-                    border: Border.all(color: AppColors.primary, width: 1.0),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primary, width: 2.0),
                     boxShadow: <BoxShadow>[
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.08),
+                        color: AppColors.primary.withValues(alpha: 0.12),
                         blurRadius: 16.0,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: AspectRatio(
-                    aspectRatio: 1.0,
-                    child: Image.asset(
-                      'assets/images/developer.jpg',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: AppColors.surfaceVariant,
-                        child: const Icon(
-                          Icons.person_rounded,
-                          size: 72.0,
-                          color: AppColors.primary,
-                        ),
+                  child: Image.asset(
+                    'assets/images/developer.jpg',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: AppColors.surfaceVariant,
+                      child: const Icon(
+                        Icons.person_rounded,
+                        size: 72.0,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
@@ -264,6 +262,91 @@ class AboutDeveloperScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
+                    ),
+                    AppSpacing.gapH12,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        OutlinedButton.icon(
+                          key: const Key('save_qris_developer_button'),
+                          onPressed: () async {
+                            final shareService = ref.read(
+                              qrisShareServiceProvider,
+                            );
+                            final success = await shareService
+                                .saveQrisToGallery();
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context)
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    success
+                                        ? 'Barcode QRIS berhasil disimpan ke galeri perangkat!'
+                                        : 'Tidak dapat menyimpan gambar ke galeri.',
+                                  ),
+                                ),
+                              );
+                          },
+                          icon: const Icon(Icons.download_rounded, size: 14.0),
+                          label: const Text(
+                            'Simpan QRIS',
+                            style: TextStyle(fontSize: 12.0),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary),
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: AppRadius.buttonRadius,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                              vertical: 6.0,
+                            ),
+                            minimumSize: const Size(0, 32.0),
+                          ),
+                        ),
+                        AppSpacing.gapW8,
+                        ElevatedButton.icon(
+                          key: const Key('share_qris_developer_button'),
+                          onPressed: () async {
+                            final shareService = ref.read(
+                              qrisShareServiceProvider,
+                            );
+                            final success = await shareService.shareQris();
+                            if (!context.mounted) return;
+                            if (!success) {
+                              ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Tidak dapat membuka lembar berbagi sistem.',
+                                    ),
+                                  ),
+                                );
+                            }
+                          },
+                          icon: const Icon(Icons.share_rounded, size: 14.0),
+                          label: const Text(
+                            'Bagikan QRIS',
+                            style: TextStyle(fontSize: 12.0),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.textOnPrimary,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: AppRadius.buttonRadius,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                              vertical: 6.0,
+                            ),
+                            minimumSize: const Size(0, 32.0),
+                            elevation: 1.0,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

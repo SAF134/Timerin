@@ -296,7 +296,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('Aplikasi sudah dalam versi terbaru (v1.0.0).'),
+          find.text('Aplikasi sudah dalam versi terbaru (v1.0.1).'),
           findsOneWidget,
         );
       },

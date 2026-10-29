@@ -450,6 +450,46 @@ class TimerSettingsCard extends ConsumerWidget {
                   ),
                   AppSpacing.gapH16,
 
+                  // 6. Transparansi Overlay (10% - 100%)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text('Transparansi Overlay', style: sectionTitleStyle),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10.0,
+                          vertical: 4.0,
+                        ),
+                        decoration: const BoxDecoration(
+                          color: AppColors.surfaceVariant,
+                          borderRadius: AppRadius.buttonRadius,
+                        ),
+                        child: Text(
+                          '${(settings.backgroundOpacity * 100).round()}%',
+                          style: AppTypography.caption12.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Slider(
+                    key: const Key('transparency_slider'),
+                    value: settings.backgroundOpacity.clamp(0.1, 1.0),
+                    min: 0.1,
+                    max: 1.0,
+                    divisions: 9,
+                    activeColor: AppColors.primary,
+                    inactiveColor: AppColors.surfaceVariant,
+                    onChanged: (val) {
+                      notifier.setBackgroundOpacity(
+                        double.parse(val.toStringAsFixed(2)),
+                      );
+                    },
+                  ),
+                  AppSpacing.gapH16,
+
                   // 6. Mode Getar Saat Timer Selesai
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -28,6 +28,14 @@ void main() {
         expect(find.byKey(const Key('developer_email_button')), findsOneWidget);
         expect(find.text('timerindev@gmail.com'), findsOneWidget);
         expect(find.text('Dukung Pengembang'), findsOneWidget);
+        expect(
+          find.byKey(const Key('save_qris_developer_button')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('share_qris_developer_button')),
+          findsOneWidget,
+        );
         expect(find.byType(Image), findsWidgets);
 
         // Kartu Jaminan Keamanan Aplikasi dihapus sesuai permintaan

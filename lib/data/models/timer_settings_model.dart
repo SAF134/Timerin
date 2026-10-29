@@ -49,6 +49,7 @@ class TimerSettings {
     this.timeFormat = TimeDisplayFormat.seconds,
     this.orientation = TimerOrientation.vertical,
     this.scale = 1.0,
+    this.backgroundOpacity = 0.85,
     this.durations = const <int>[30, 60, 120, 180, 30],
     this.isVibrationEnabled = true,
     this.positionX,
@@ -69,6 +70,9 @@ class TimerSettings {
 
   /// Skala ukuran overlay: 50%–100% (0.5 – 1.0) (FR-008).
   final double scale;
+
+  /// Tingkat opasitas warna latar belakang bubble overlay (0.1 – 1.0, default 0.85).
+  final double backgroundOpacity;
 
   /// Durasi masing-masing timer dalam detik (FR-007).
   final List<int> durations;
@@ -114,6 +118,7 @@ class TimerSettings {
     TimeDisplayFormat? timeFormat,
     TimerOrientation? orientation,
     double? scale,
+    double? backgroundOpacity,
     List<int>? durations,
     bool? isVibrationEnabled,
     double? positionX,
@@ -125,6 +130,10 @@ class TimerSettings {
       timeFormat: timeFormat ?? this.timeFormat,
       orientation: orientation ?? this.orientation,
       scale: (scale ?? this.scale).clamp(0.5, 1.0),
+      backgroundOpacity: (backgroundOpacity ?? this.backgroundOpacity).clamp(
+        0.1,
+        1.0,
+      ),
       durations: durations != null
           ? List<int>.unmodifiable(
               durations.map(
@@ -147,6 +156,7 @@ class TimerSettings {
       'timeFormat': timeFormat.name,
       'orientation': orientation.name,
       'scale': scale,
+      'backgroundOpacity': backgroundOpacity,
       'durations': durations,
       'isVibrationEnabled': isVibrationEnabled,
       'positionX': positionX,
@@ -161,6 +171,7 @@ class TimerSettings {
     final rawFormat = map['timeFormat'] as String?;
     final rawOrientation = map['orientation'] as String?;
     final rawScale = (map['scale'] as num?)?.toDouble() ?? 1.0;
+    final rawOpacity = (map['backgroundOpacity'] as num?)?.toDouble() ?? 0.85;
     final rawDurations =
         (map['durations'] as List<dynamic>?)
             ?.map((e) => (e as num).toInt())
@@ -185,6 +196,7 @@ class TimerSettings {
       timeFormat: timeFormat,
       orientation: orientation,
       scale: rawScale.clamp(0.5, 1.0),
+      backgroundOpacity: rawOpacity.clamp(0.1, 1.0),
       durations: List<int>.unmodifiable(
         rawDurations.map(
           (d) => d.clamp(
@@ -219,6 +231,7 @@ class TimerSettings {
         other.timeFormat == timeFormat &&
         other.orientation == orientation &&
         other.scale == scale &&
+        other.backgroundOpacity == backgroundOpacity &&
         listEquals(other.durations, durations) &&
         other.isVibrationEnabled == isVibrationEnabled &&
         other.positionX == positionX &&
@@ -231,6 +244,7 @@ class TimerSettings {
     timeFormat,
     orientation,
     scale,
+    backgroundOpacity,
     Object.hashAll(durations),
     isVibrationEnabled,
     positionX,

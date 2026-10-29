@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timerin/core/constants/app_constants.dart';
 import 'package:timerin/core/services/app_update_service.dart';
+import 'package:timerin/core/services/cooldown_service.dart';
 import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
 import 'package:timerin/core/theme/app_spacing.dart';
@@ -609,12 +610,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              const Text(
-                'Izin Umpan Balik Haptik',
-                style: AppTypography.title20,
+              const Expanded(
+                child: Text(
+                  'Izin Umpan Balik Haptik',
+                  style: AppTypography.title20,
+                ),
               ),
+              AppSpacing.gapW8,
               if (_isLoadingHaptic)
                 const SizedBox(
                   width: 14.0,
@@ -697,43 +701,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         children: <Widget>[
           const Text('Informasi Aplikasi', style: AppTypography.title20),
           AppSpacing.gapH12,
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text('Versi Aplikasi', style: AppTypography.body14Muted),
-              Text(SettingsScreen.appVersion, style: AppTypography.body14),
-            ],
-          ),
-          AppSpacing.gapH16,
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              key: const Key('check_update_tile'),
-              onPressed: _isCheckingUpdate ? null : _checkAppUpdate,
-              icon: _isCheckingUpdate
-                  ? const SizedBox(
-                      width: 14.0,
-                      height: 14.0,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.0,
-                        color: AppColors.textOnPrimary,
-                      ),
-                    )
-                  : const Icon(Icons.refresh_rounded, size: 18.0),
-              label: const Text('Periksa Pembaruan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textOnPrimary,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: AppRadius.buttonRadius,
-                ),
-                elevation: 2.0,
-              ),
-            ),
-          ),
-          AppSpacing.gapH12,
-          const Divider(color: AppColors.border, height: 1.0),
-          AppSpacing.gapH12,
           InkWell(
             key: const Key('about_developer_tile'),
             onTap: () {
@@ -779,17 +746,73 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               ],
             ),
           ),
+          AppSpacing.gapH12,
+          const Divider(color: AppColors.border, height: 1.0),
+          AppSpacing.gapH12,
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text('Versi Aplikasi', style: AppTypography.body14Muted),
+              Text(SettingsScreen.appVersion, style: AppTypography.body14),
+            ],
+          ),
+          AppSpacing.gapH12,
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              key: const Key('check_update_tile'),
+              onPressed: _isCheckingUpdate ? null : _checkAppUpdate,
+              icon: _isCheckingUpdate
+                  ? const SizedBox(
+                      width: 12.0,
+                      height: 12.0,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        color: AppColors.textOnPrimary,
+                      ),
+                    )
+                  : const Icon(Icons.refresh_rounded, size: 15.0),
+              label: const Text(
+                'Periksa Pembaruan',
+                style: TextStyle(fontSize: 12.0),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                minimumSize: const Size.fromHeight(36.0),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadius.buttonRadius,
+                ),
+                elevation: 1.0,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
   Future<void> _checkAppUpdate() async {
+    final cooldown = ref.read(cooldownServiceProvider);
+    if (!cooldown.canExecute('check_update')) {
+      final remaining = cooldown.getRemainingCooldown('check_update');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Harap tunggu ${CooldownService.formatRemaining(remaining)} sebelum memeriksa pembaruan kembali.',
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isCheckingUpdate = true);
     AppUpdateInfo? info;
     try {
       final updateService = ref.read(appUpdateServiceProvider);
       info = await updateService.checkUpdate();
+      cooldown.recordExecution('check_update');
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

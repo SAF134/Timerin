@@ -30,8 +30,8 @@ void main() {
     );
   }
 
-  group('OverlayPermissionDialog Tests (FR-012 / Restricted Settings)', () {
-    testWidgets('renders microcopy and restricted settings guide', (
+  group('OverlayPermissionDialog Tests (FR-012)', () {
+    testWidgets('renders microcopy and permission action buttons', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(createWidgetUnderTest());
@@ -43,50 +43,35 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(
-        find.text('Tombol Izin Abu-Abu / Tidak Bisa Ditekan?'),
-        findsOneWidget,
-      );
-      expect(find.text('Buka Info Aplikasi Timerin'), findsOneWidget);
-      expect(
-        find.text('Ketuk ikon menu 3-titik (⋮) di pojok kanan atas'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('Pilih "Izinkan setelan terbatas" & masukkan PIN/sidik jari'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('tapping Buka Pengaturan Izin calls requestOverlayPermission', (
-      WidgetTester tester,
-    ) async {
-      when(
-        () => mockPermissionService.requestOverlayPermission(),
-      ).thenAnswer((_) async => true);
-
-      await tester.pumpWidget(createWidgetUnderTest());
-
-      await tester.tap(find.text('Buka Setelan Izin Sistem'));
-      await tester.pumpAndSettle();
-
-      verify(() => mockPermissionService.requestOverlayPermission()).called(1);
+      expect(find.text('Buka Setelan Izin Sistem'), findsOneWidget);
+      expect(find.text('Nanti Saja'), findsOneWidget);
     });
 
     testWidgets(
-      'tapping Buka Setelan Info Aplikasi calls openApplicationSettings',
+      'tapping Buka Setelan Izin Sistem calls requestOverlayPermission',
       (WidgetTester tester) async {
         when(
-          () => mockPermissionService.openApplicationSettings(),
+          () => mockPermissionService.requestOverlayPermission(),
         ).thenAnswer((_) async => true);
 
         await tester.pumpWidget(createWidgetUnderTest());
 
-        await tester.tap(find.text('Buka Setelan Info Aplikasi'));
+        await tester.tap(find.text('Buka Setelan Izin Sistem'));
         await tester.pumpAndSettle();
 
-        verify(() => mockPermissionService.openApplicationSettings()).called(1);
+        verify(
+          () => mockPermissionService.requestOverlayPermission(),
+        ).called(1);
       },
     );
+
+    testWidgets('renders Nanti Saja as an OutlinedButton', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+
+      final laterButton = find.widgetWithText(OutlinedButton, 'Nanti Saja');
+      expect(laterButton, findsOneWidget);
+    });
   });
 }

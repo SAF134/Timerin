@@ -6,7 +6,7 @@ import 'package:timerin/core/theme/app_spacing.dart';
 import 'package:timerin/core/theme/app_typography.dart';
 import 'package:timerin/features/overlay/services/overlay_permission_service.dart';
 
-/// Dialog penjelasan izin overlay dan panduan bypass Restricted Settings pada Android 13-15 (FR-012).
+/// Dialog penjelasan izin overlay (FR-012, SCR-004).
 class OverlayPermissionDialog extends ConsumerWidget {
   const OverlayPermissionDialog({super.key});
 
@@ -72,8 +72,9 @@ class OverlayPermissionDialog extends ConsumerWidget {
 
               // Primary Action: Open Permission Setting
               ElevatedButton.icon(
+                key: const Key('open_permission_setting_button'),
                 onPressed: () async {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(true);
                   await permissionService.requestOverlayPermission();
                 },
                 icon: const Icon(Icons.settings),
@@ -85,222 +86,28 @@ class OverlayPermissionDialog extends ConsumerWidget {
                     borderRadius: AppRadius.buttonRadius,
                   ),
                   elevation: 2.0,
+                  minimumSize: const Size.fromHeight(44.0),
                 ),
               ),
-              AppSpacing.gapH24,
+              AppSpacing.gapH12,
 
-              // Section: Android 13+ Restricted Settings Guide
-              Container(
-                padding: AppSpacing.p16,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
-                  borderRadius: AppRadius.cardRadius,
-                  border: Border.all(color: AppColors.primary, width: 1.0),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.08),
-                      blurRadius: 16.0,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        const Icon(
-                          Icons.info_outline,
-                          size: 20.0,
-                          color: AppColors.warning,
-                        ),
-                        AppSpacing.gapW8,
-                        Expanded(
-                          child: Text(
-                            'Tombol Izin Abu-Abu / Tidak Bisa Ditekan?',
-                            style: AppTypography.body14.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.text,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    AppSpacing.gapH8,
-                    Text(
-                      'Di Android 13-15 hasil pemasangan langsung (sideload), ikuti 3 langkah berikut:',
-                      style: AppTypography.caption12.copyWith(
-                        color: AppColors.textMuted,
-                      ),
-                      textAlign: TextAlign.justify,
-                    ),
-                    AppSpacing.gapH12,
-                    _buildStepItem('1', 'Buka Info Aplikasi Timerin'),
-                    _buildStepItem(
-                      '2',
-                      'Ketuk ikon menu 3-titik (⋮) di pojok kanan atas',
-                    ),
-                    _buildStepItem(
-                      '3',
-                      'Pilih "Izinkan setelan terbatas" & masukkan PIN/sidik jari',
-                    ),
-                    AppSpacing.gapH12,
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        await permissionService.openApplicationSettings();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textOnPrimary,
-                        minimumSize: const Size.fromHeight(40.0),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: AppRadius.buttonRadius,
-                        ),
-                        elevation: 2.0,
-                      ),
-                      icon: const Icon(Icons.app_settings_alt, size: 18.0),
-                      label: const Text('Buka Setelan Info Aplikasi'),
-                    ),
-                  ],
-                ),
-              ),
-              AppSpacing.gapH16,
-
-              // Section: Xiaomi / MIUI / HyperOS Guide
-              Container(
-                padding: AppSpacing.p16,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
-                  borderRadius: AppRadius.cardRadius,
-                  border: Border.all(color: AppColors.primary, width: 1.0),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.08),
-                      blurRadius: 16.0,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        const Icon(
-                          Icons.warning_amber_rounded,
-                          size: 20.0,
-                          color: AppColors.warning,
-                        ),
-                        AppSpacing.gapW8,
-                        Expanded(
-                          child: Text(
-                            'Khusus HP Xiaomi / Redmi / POCO',
-                            style: AppTypography.body14.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.text,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    AppSpacing.gapH8,
-                    Text(
-                      'MIUI & HyperOS memblokir overlay jika izin latar belakang belum aktif:',
-                      style: AppTypography.caption12.copyWith(
-                        color: AppColors.textMuted,
-                      ),
-                      textAlign: TextAlign.justify,
-                    ),
-                    AppSpacing.gapH8,
-                    _buildStepItem(
-                      '1',
-                      'Buka Info Aplikasi Timerin di Setelan HP',
-                    ),
-                    _buildStepItem(
-                      '2',
-                      'Pilih menu "Perizinan Lainnya" (Other Permissions)',
-                    ),
-                    _buildStepItem(
-                      '3',
-                      'Centang "Tampilkan jendela pop-up saat di latar belakang"',
-                    ),
-                    AppSpacing.gapH8,
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        await permissionService.openApplicationSettings();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textOnPrimary,
-                        minimumSize: const Size.fromHeight(36.0),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: AppRadius.buttonRadius,
-                        ),
-                        elevation: 2.0,
-                      ),
-                      icon: const Icon(
-                        Icons.settings_suggest_rounded,
-                        size: 18.0,
-                      ),
-                      label: const Text('Buka Info Aplikasi Xiaomi'),
-                    ),
-                  ],
-                ),
-              ),
-              AppSpacing.gapH16,
-
-              // Dismiss / Cancel Button
-              TextButton(
+              // Dismiss / Cancel Button: OutlinedButton
+              OutlinedButton(
+                key: const Key('overlay_permission_later_button'),
                 onPressed: () => Navigator.of(context).pop(false),
-                child: Text(
-                  'Nanti Saja',
-                  style: AppTypography.body14.copyWith(
-                    color: AppColors.textMuted,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.textMuted,
+                  side: const BorderSide(color: AppColors.border),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadius.buttonRadius,
                   ),
+                  minimumSize: const Size.fromHeight(44.0),
                 ),
+                child: const Text('Nanti Saja'),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStepItem(String number, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Container(
-            width: 18.0,
-            height: 18.0,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              number,
-              style: AppTypography.caption12.copyWith(
-                color: AppColors.textOnPrimary,
-                fontSize: 10.0,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          AppSpacing.gapW8,
-          Expanded(
-            child: Text(
-              text,
-              style: AppTypography.caption12.copyWith(
-                color: AppColors.text,
-                height: 1.3,
-              ),
-              textAlign: TextAlign.justify,
-            ),
-          ),
-        ],
       ),
     );
   }

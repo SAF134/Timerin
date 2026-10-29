@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timerin/core/services/app_update_service.dart';
+import 'package:timerin/core/services/cooldown_service.dart';
 import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
 import 'package:timerin/core/theme/app_spacing.dart';
@@ -34,12 +35,26 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _hasShownExpiredDialog = false;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(accessStateProvider.notifier).refreshAccess();
-      _checkOptionalUpdate();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final initialAccess = ref.read(accessStateProvider);
+      if (initialAccess.isExpired && !_hasShownExpiredDialog) {
+        _hasShownExpiredDialog = true;
+        _showExpiredDialog();
+      }
+      await ref.read(accessStateProvider.notifier).refreshAccess();
+      if (mounted) {
+        final currentAccess = ref.read(accessStateProvider);
+        if (currentAccess.isExpired && !_hasShownExpiredDialog) {
+          _hasShownExpiredDialog = true;
+          _showExpiredDialog();
+        }
+      }
+      await _checkOptionalUpdate();
     });
   }
 
@@ -88,9 +103,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.cardRadius,
           ),
-          title: const Text('Masa Akses Habis', style: AppTypography.title20),
+          title: const Text('Masa Aktif Habis', style: AppTypography.title20),
           content: const Text(
-            'Masa trial atau langganan akun Anda telah berakhir. Segera berlangganan untuk dapat menggunakan fitur overlay timer ini kembali.',
+            'Masa coba gratis atau langganan akun Anda telah berakhir. Segera berlangganan untuk dapat menggunakan fitur overlay timer ini kembali.',
             style: AppTypography.body14,
             textAlign: TextAlign.justify,
           ),
@@ -100,24 +115,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: <Widget>[
                 Expanded(
                   child: OutlinedButton(
+                    key: const Key('expired_dialog_later_button'),
                     onPressed: () => Navigator.of(dialogContext).pop(),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(44.0),
                       shape: const RoundedRectangleBorder(
                         borderRadius: AppRadius.buttonRadius,
                       ),
+                      side: const BorderSide(color: AppColors.border),
+                      foregroundColor: AppColors.textMuted,
                     ),
-                    child: const Text('Tutup'),
+                    child: const Text('Nanti Saja'),
                   ),
                 ),
                 AppSpacing.gapW12,
                 Expanded(
                   child: ElevatedButton(
+                    key: const Key('expired_dialog_subscribe_button'),
                     onPressed: () {
                       Navigator.of(dialogContext).pop();
                       _navigateToSubscription();
                     },
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.textOnPrimary,
                       minimumSize: const Size.fromHeight(44.0),
                       shape: const RoundedRectangleBorder(
                         borderRadius: AppRadius.buttonRadius,
@@ -219,7 +240,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           color: AppColors.accent,
           backgroundColor: AppColors.surface,
           onRefresh: () async {
+            final cooldown = ref.read(cooldownServiceProvider);
+            if (!cooldown.canExecute('refresh_access')) {
+              final remaining = cooldown.getRemainingCooldown('refresh_access');
+              if (context.mounted) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Harap tunggu ${CooldownService.formatRemaining(remaining)} sebelum menyegarkan status kembali.',
+                      ),
+                    ),
+                  );
+              }
+              return;
+            }
             await ref.read(accessStateProvider.notifier).refreshAccess();
+            cooldown.recordExecution('refresh_access');
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -375,6 +413,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           foregroundColor: AppColors.error,
                           side: const BorderSide(color: AppColors.error),
                           minimumSize: const Size.fromHeight(48.0),
+                        ),
+                      )
+                    : accessState.isExpired
+                    ? ElevatedButton.icon(
+                        key: const Key('start_overlay_button'),
+                        onPressed: _navigateToSubscription,
+                        icon: const Icon(Icons.workspace_premium_rounded),
+                        label: const Text('Berlangganan Sekarang'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textOnPrimary,
+                          minimumSize: const Size.fromHeight(48.0),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: AppRadius.buttonRadius,
+                          ),
+                          elevation: 2.0,
                         ),
                       )
                     : ElevatedButton.icon(

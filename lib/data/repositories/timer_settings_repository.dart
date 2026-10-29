@@ -54,6 +54,11 @@ class TimerSettingsNotifier extends Notifier<TimerSettings> {
     await updateSettings(state.copyWith(scale: scale));
   }
 
+  /// Mengubah tingkat transparansi/opasitas warna latar belakang overlay (0.1 – 1.0).
+  Future<void> setBackgroundOpacity(double opacity) async {
+    await updateSettings(state.copyWith(backgroundOpacity: opacity));
+  }
+
   /// Mengubah durasi timer ke-[index] dalam detik (FR-007).
   Future<void> setTimerDuration(int index, int seconds) async {
     await updateSettings(state.copyWithDuration(index, seconds));

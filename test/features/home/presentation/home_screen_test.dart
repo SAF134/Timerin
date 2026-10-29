@@ -267,7 +267,7 @@ void main() {
       );
 
       testWidgets(
-        'when status is HABIS, tapping Aktifkan Overlay shows expired dialog with subscription redirect (FR-014)',
+        'when status is HABIS, shows expired dialog on entry and changes overlay button to Berlangganan Sekarang (FR-014)',
         (WidgetTester tester) async {
           await tester.pumpWidget(
             createWidgetUnderTest(
@@ -277,10 +277,20 @@ void main() {
               ),
             ),
           );
-          await tester.pump();
+          await tester.pumpAndSettle();
+
+          // Dialog is shown automatically on entry
+          expect(find.text('Masa Aktif Habis'), findsOneWidget);
+          expect(find.text('Nanti Saja'), findsOneWidget);
+          expect(find.text('Langganan'), findsOneWidget);
+
+          // Tap Nanti Saja to close dialog
+          await tester.tap(find.text('Nanti Saja'));
+          await tester.pumpAndSettle();
 
           final buttonFinder = find.byKey(const Key('start_overlay_button'));
           expect(buttonFinder, findsOneWidget);
+          expect(find.text('Berlangganan Sekarang'), findsOneWidget);
 
           expect(
             find.text(
@@ -289,14 +299,6 @@ void main() {
             findsOneWidget,
           );
           expect(find.text('Masa aktif habis'), findsOneWidget);
-
-          await tester.ensureVisible(buttonFinder);
-          await tester.pumpAndSettle();
-          await tester.tap(buttonFinder);
-          await tester.pumpAndSettle();
-
-          expect(find.text('Masa Akses Habis'), findsOneWidget);
-          expect(find.text('Langganan'), findsOneWidget);
 
           verifyNever(
             () => mockOverlayController.startOverlay(
@@ -317,12 +319,6 @@ void main() {
               ),
             ),
           );
-          await tester.pump();
-
-          final buttonFinder = find.byKey(const Key('start_overlay_button'));
-          await tester.ensureVisible(buttonFinder);
-          await tester.pumpAndSettle();
-          await tester.tap(buttonFinder);
           await tester.pumpAndSettle();
 
           final subscribeBtn = find.text('Langganan');

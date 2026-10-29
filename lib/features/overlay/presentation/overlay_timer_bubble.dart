@@ -22,6 +22,7 @@ class OverlayTimerBubble extends StatefulWidget {
     this.showMinutesSeconds = false,
     this.isInteractive = true,
     this.isVibrationEnabled = true,
+    this.backgroundOpacity = 0.85,
     this.onTap,
   });
 
@@ -45,6 +46,9 @@ class OverlayTimerBubble extends StatefulWidget {
 
   /// Apakah getaran fisik aktif saat timer habis.
   final bool isVibrationEnabled;
+
+  /// Tingkat opasitas latar belakang (0.1 – 1.0).
+  final double backgroundOpacity;
 
   /// Callback tambahan saat bubble diketuk.
   final VoidCallback? onTap;
@@ -242,7 +246,9 @@ class _OverlayTimerBubbleState extends State<OverlayTimerBubble> {
                     width: widget.size - 6.0,
                     height: widget.size - 6.0,
                     decoration: BoxDecoration(
-                      color: AppColors.overlayBg,
+                      color: AppColors.primary.withValues(
+                        alpha: widget.backgroundOpacity,
+                      ),
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isIdle

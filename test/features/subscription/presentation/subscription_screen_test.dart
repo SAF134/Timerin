@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:timerin/core/constants/app_constants.dart';
+import 'package:timerin/core/services/cooldown_service.dart';
+import 'package:timerin/core/services/qris_share_service.dart';
 import 'package:timerin/core/services/url_launcher_service.dart';
 import 'package:timerin/core/theme/app_theme.dart';
 import 'package:timerin/data/repositories/privacy_mode_repository.dart';
@@ -17,6 +19,8 @@ class MockAuthService extends Mock implements AuthService {}
 class MockUser extends Mock implements User {}
 
 class MockUrlLauncherService extends Mock implements UrlLauncherService {}
+
+class MockQrisShareService extends Mock implements QrisShareService {}
 
 class FakeAccessNotifier extends AccessNotifier {
   FakeAccessNotifier(this._initialState);
@@ -46,15 +50,23 @@ void main() {
   late MockAuthService mockAuthService;
   late MockUser mockUser;
   late MockUrlLauncherService mockLauncherService;
+  late MockQrisShareService mockQrisShareService;
+  late CooldownService cooldownService;
 
   setUp(() {
     mockAuthService = MockAuthService();
     mockUser = MockUser();
     mockLauncherService = MockUrlLauncherService();
+    mockQrisShareService = MockQrisShareService();
+    cooldownService = CooldownService();
 
     when(() => mockUser.uid).thenReturn('user_123_abc');
     when(() => mockUser.email).thenReturn('gamer@example.com');
     when(() => mockAuthService.currentUser).thenReturn(mockUser);
+    when(
+      () => mockQrisShareService.saveQrisToGallery(),
+    ).thenAnswer((_) async => true);
+    when(() => mockQrisShareService.shareQris()).thenAnswer((_) async => true);
   });
 
   Widget createWidgetUnderTest({
@@ -71,6 +83,8 @@ void main() {
       overrides: [
         authServiceProvider.overrideWithValue(mockAuthService),
         urlLauncherServiceProvider.overrideWithValue(mockLauncherService),
+        qrisShareServiceProvider.overrideWithValue(mockQrisShareService),
+        cooldownServiceProvider.overrideWithValue(cooldownService),
         accessStateProvider.overrideWith(() => notifier),
         privacyModeProvider.overrideWith(
           () => FakePrivacyModeNotifier(isPrivacyMode),
@@ -226,5 +240,74 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets(
+      'tapping save QRIS button calls saveQrisToGallery and shows snackbar',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pump();
+
+        final saveBtn = find.byKey(const Key('save_qris_button'));
+        await tester.ensureVisible(saveBtn);
+        await tester.pumpAndSettle();
+        await tester.tap(saveBtn);
+        await tester.pumpAndSettle();
+
+        verify(() => mockQrisShareService.saveQrisToGallery()).called(1);
+        expect(
+          find.text('Barcode QRIS berhasil disimpan ke galeri perangkat!'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('tapping share QRIS button calls shareQris', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump();
+
+      final shareBtn = find.byKey(const Key('share_qris_button'));
+      await tester.ensureVisible(shareBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(shareBtn);
+      await tester.pumpAndSettle();
+
+      verify(() => mockQrisShareService.shareQris()).called(1);
+    });
+
+    testWidgets(
+      'tapping Segarkan Status repeatedly shows 5-minute cooldown message',
+      (WidgetTester tester) async {
+        final notifier = FakeAccessNotifier(
+          const AccessState(
+            status: AccessStatus.berlangganan,
+            remainingAccess: Duration(days: 30),
+          ),
+        );
+
+        await tester.pumpWidget(
+          createWidgetUnderTest(customNotifier: notifier),
+        );
+        await tester.pump();
+
+        final refreshBtn = find.byKey(const Key('refresh_status_button'));
+        await tester.ensureVisible(refreshBtn);
+        await tester.pumpAndSettle();
+
+        // First tap succeeds
+        await tester.tap(refreshBtn);
+        await tester.pumpAndSettle();
+        expect(notifier.refreshAccessCalled, isTrue);
+
+        // Second tap immediately triggers cooldown
+        notifier.refreshAccessCalled = false;
+        await tester.tap(refreshBtn);
+        await tester.pumpAndSettle();
+
+        expect(notifier.refreshAccessCalled, isFalse);
+        expect(find.textContaining('Harap tunggu'), findsOneWidget);
+      },
+    );
   });
 }

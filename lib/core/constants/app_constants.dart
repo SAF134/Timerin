@@ -16,11 +16,11 @@ abstract final class AppConstants {
   static const String activationEstimatedTime = '1x24 jam';
 
   /// Nomor versi rilis aplikasi saat ini (versionName).
-  static const String currentVersionName = '1.0.0';
+  static const String currentVersionName = '1.0.1';
 
   /// Kode versi rilis aplikasi saat ini (versionCode).
-  static const int currentVersionCode = 1;
+  static const int currentVersionCode = 2;
 
   /// Label lengkap versi aplikasi untuk tampilan UI (SCR-006).
-  static const String currentAppVersionFormatted = '1.0.0';
+  static const String currentAppVersionFormatted = '1.0.1';
 }

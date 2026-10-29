@@ -147,6 +147,7 @@ class _OverlayContainerState extends State<OverlayContainer> {
             showMinutesSeconds: showMinutesSeconds,
             isInteractive: widget.isInteractive,
             isVibrationEnabled: settings.isVibrationEnabled,
+            backgroundOpacity: settings.backgroundOpacity,
           ),
         ),
       );

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timerin/core/constants/app_constants.dart';
+import 'package:timerin/core/services/cooldown_service.dart';
+import 'package:timerin/core/services/qris_share_service.dart';
 import 'package:timerin/core/services/url_launcher_service.dart';
 import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
@@ -28,12 +30,28 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   bool _isRefreshing = false;
 
   Future<void> _handleRefreshStatus() async {
+    final cooldown = ref.read(cooldownServiceProvider);
+    if (!cooldown.canExecute('refresh_access')) {
+      final remaining = cooldown.getRemainingCooldown('refresh_access');
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'Harap tunggu ${CooldownService.formatRemaining(remaining)} sebelum menyegarkan status kembali.',
+            ),
+          ),
+        );
+      return;
+    }
+
     setState(() {
       _isRefreshing = true;
     });
 
     try {
       await ref.read(accessStateProvider.notifier).refreshAccess();
+      cooldown.recordExecution('refresh_access');
       if (!mounted) return;
 
       final updatedState = ref.read(accessStateProvider);
@@ -52,6 +70,38 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
           _isRefreshing = false;
         });
       }
+    }
+  }
+
+  Future<void> _handleSaveQris() async {
+    final shareService = ref.read(qrisShareServiceProvider);
+    final success = await shareService.saveQrisToGallery();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? 'Barcode QRIS berhasil disimpan ke galeri perangkat!'
+                : 'Tidak dapat menyimpan gambar ke galeri.',
+          ),
+        ),
+      );
+  }
+
+  Future<void> _handleShareQris() async {
+    final shareService = ref.read(qrisShareServiceProvider);
+    final success = await shareService.shareQris();
+    if (!mounted) return;
+    if (!success) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Tidak dapat membuka lembar berbagi sistem.'),
+          ),
+        );
     }
   }
 
@@ -393,7 +443,8 @@ Terima kasih.''';
             ),
           ),
           AppSpacing.gapH12,
-          ElevatedButton.icon(
+          // Tombol Salin Nominal (Diperkecil)
+          OutlinedButton.icon(
             key: const Key('copy_nominal_button'),
             onPressed: () {
               Clipboard.setData(const ClipboardData(text: '10000'));
@@ -403,20 +454,74 @@ Terima kasih.''';
                 ),
               );
             },
-            icon: const Icon(Icons.copy_rounded, size: 16.0),
-            label: const Text('Salin Nominal: 10.000'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.textOnPrimary,
+            icon: const Icon(Icons.copy_rounded, size: 14.0),
+            label: const Text(
+              'Salin Nominal: 10.000',
+              style: TextStyle(fontSize: 12.0),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
               shape: const RoundedRectangleBorder(
                 borderRadius: AppRadius.buttonRadius,
               ),
-              elevation: 2.0,
               padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
+                horizontal: 14.0,
+                vertical: 6.0,
               ),
+              minimumSize: const Size(0, 32.0),
             ),
+          ),
+          AppSpacing.gapH12,
+          // Tombol Simpan & Bagikan Barcode QRIS
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              OutlinedButton.icon(
+                key: const Key('save_qris_button'),
+                onPressed: _handleSaveQris,
+                icon: const Icon(Icons.download_rounded, size: 14.0),
+                label: const Text(
+                  'Simpan QRIS',
+                  style: TextStyle(fontSize: 12.0),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadius.buttonRadius,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 6.0,
+                  ),
+                  minimumSize: const Size(0, 32.0),
+                ),
+              ),
+              AppSpacing.gapW8,
+              ElevatedButton.icon(
+                key: const Key('share_qris_button'),
+                onPressed: _handleShareQris,
+                icon: const Icon(Icons.share_rounded, size: 14.0),
+                label: const Text(
+                  'Bagikan QRIS',
+                  style: TextStyle(fontSize: 12.0),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textOnPrimary,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadius.buttonRadius,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 6.0,
+                  ),
+                  minimumSize: const Size(0, 32.0),
+                  elevation: 1.0,
+                ),
+              ),
+            ],
           ),
         ],
       ),

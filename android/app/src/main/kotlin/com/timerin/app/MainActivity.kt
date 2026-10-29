@@ -1,10 +1,17 @@
 package com.timerin.app
 
 import android.content.Context
+import android.content.ContentValues
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Build
+import android.os.Environment
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.MediaStore
+import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
@@ -83,6 +90,12 @@ class MainActivity : FlutterActivity() {
                     attachVibrationChannelToOverlayEngine()
                     result.success(true)
                 }
+                "shareQris" -> {
+                    shareOrSaveQris(isShare = true, result)
+                }
+                "saveQris" -> {
+                    shareOrSaveQris(isShare = false, result)
+                }
                 else -> result.notImplemented()
             }
         }
@@ -112,5 +125,55 @@ class MainActivity : FlutterActivity() {
 
     private fun cancelVibrate() {
         getVibrator()?.cancel()
+    }
+
+    private fun shareOrSaveQris(isShare: Boolean, result: MethodChannel.Result) {
+        try {
+            val assetManager = context.assets
+            val inputStream = try {
+                assetManager.open("flutter_assets/assets/images/qris.png")
+            } catch (e: Exception) {
+                assetManager.open("assets/images/qris.png")
+            }
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream.close()
+
+            val filename = "QRIS_Timerin_${System.currentTimeMillis()}.png"
+            val resolver = context.contentResolver
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Timerin")
+                }
+            }
+
+            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            if (uri != null) {
+                resolver.openOutputStream(uri)?.use { outputStream ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                }
+
+                if (isShare) {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "image/png"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        putExtra(Intent.EXTRA_TEXT, "QRIS Pembayaran Langganan Timerin - Rp10.000 / 30 Hari")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    val chooser = Intent.createChooser(shareIntent, "Bagikan QRIS Timerin").apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(chooser)
+                    result.success(true)
+                } else {
+                    result.success(true)
+                }
+            } else {
+                result.success(false)
+            }
+        } catch (e: Exception) {
+            result.error("QRIS_ERROR", e.localizedMessage, null)
+        }
     }
 }
