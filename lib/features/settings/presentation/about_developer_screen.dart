@@ -187,7 +187,79 @@ class AboutDeveloperScreen extends ConsumerWidget {
               ),
               AppSpacing.gapH16,
 
-              // 4. Dukungan untuk Pengembang (Navigasi ke SupportDeveloperScreen)
+              // 4. Unduh Aplikasi & Website Resmi
+              Container(
+                padding: AppSpacing.p24,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: AppRadius.cardRadius,
+                  border: Border.all(color: AppColors.primary, width: 1.0),
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      blurRadius: 16.0,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Row(
+                      children: <Widget>[
+                        Icon(
+                          Icons.language_rounded,
+                          color: AppColors.primary,
+                          size: 20.0,
+                        ),
+                        AppSpacing.gapW8,
+                        Text(
+                          'Website Resmi & Unduhan',
+                          style: AppTypography.title20,
+                        ),
+                      ],
+                    ),
+                    AppSpacing.gapH12,
+                    Text(
+                      'Unduh versi APK terbaru Timerin, baca panduan fitur, serta bagikan tautan resmi aplikasi kepada teman mabar Anda melalui website resmi:',
+                      style: AppTypography.body14.copyWith(
+                        color: AppColors.textMuted,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.justify,
+                    ),
+                    AppSpacing.gapH12,
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        key: const Key('developer_website_button'),
+                        onPressed: () {
+                          ref
+                              .read(urlLauncherServiceProvider)
+                              .launchExternalUrl('https://timerin.vercel.app/');
+                        },
+                        icon: const Icon(
+                          Icons.open_in_browser_rounded,
+                          size: 18.0,
+                        ),
+                        label: const Text('timerin.vercel.app'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textOnPrimary,
+                          minimumSize: const Size.fromHeight(48.0),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: AppRadius.buttonRadius,
+                          ),
+                          elevation: 2.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              AppSpacing.gapH16,
+
+              // 5. Dukungan untuk Pengembang (Navigasi ke SupportDeveloperScreen)
               Container(
                 padding: AppSpacing.p24,
                 decoration: BoxDecoration(
