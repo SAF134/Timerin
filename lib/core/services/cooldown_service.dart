@@ -4,11 +4,11 @@ final cooldownServiceProvider = Provider<CooldownService>((ref) {
   return CooldownService();
 });
 
-/// Layanan manajemen cooldown anti-spam untuk request jaringan/server (5 menit).
+/// Layanan manajemen cooldown anti-spam untuk request jaringan/server (1 menit / 60 detik).
 class CooldownService {
   final Map<String, DateTime> _lastActionTimestamps = <String, DateTime>{};
 
-  static const Duration defaultCooldown = Duration(minutes: 5);
+  static const Duration defaultCooldown = Duration(minutes: 1);
 
   /// Mengecek apakah suatu aksi dapat dieksekusi berdasarkan jeda cooldown.
   bool canExecute(

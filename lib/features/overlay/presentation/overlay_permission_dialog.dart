@@ -77,8 +77,11 @@ class OverlayPermissionDialog extends ConsumerWidget {
                   Navigator.of(context).pop(true);
                   await permissionService.requestOverlayPermission();
                 },
-                icon: const Icon(Icons.settings),
-                label: const Text('Buka Setelan Izin Sistem'),
+                icon: const Icon(Icons.settings, size: 16.0),
+                label: const Text(
+                  'Izinkan Pengaturan Overlay Aplikasi',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.textOnPrimary,
@@ -86,7 +89,7 @@ class OverlayPermissionDialog extends ConsumerWidget {
                     borderRadius: AppRadius.buttonRadius,
                   ),
                   elevation: 2.0,
-                  minimumSize: const Size.fromHeight(44.0),
+                  minimumSize: const Size.fromHeight(40.0),
                 ),
               ),
               AppSpacing.gapH12,

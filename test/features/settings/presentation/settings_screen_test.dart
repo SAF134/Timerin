@@ -18,6 +18,7 @@ import 'package:timerin/features/overlay/services/overlay_permission_service.dar
 import 'package:timerin/features/settings/presentation/about_developer_screen.dart';
 import 'package:timerin/features/settings/presentation/privacy_policy_screen.dart';
 import 'package:timerin/features/settings/presentation/settings_screen.dart';
+import 'package:timerin/features/settings/presentation/support_developer_screen.dart';
 import 'package:timerin/features/subscription/domain/access_state.dart';
 import 'package:timerin/features/subscription/presentation/subscription_screen.dart';
 import 'package:timerin/features/subscription/services/access_service.dart';
@@ -166,8 +167,20 @@ void main() {
       },
     );
 
+    testWidgets('overlay permission card hides button when granted', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+      expect(find.text('Diizinkan'), findsWidgets);
+      expect(
+        find.byKey(const Key('open_permission_settings_button')),
+        findsNothing,
+      );
+    });
+
     testWidgets(
-      'tapping Buka Setelan Izin Sistem calls requestOverlayPermission',
+      'when overlay permission is not granted, shows button with label Izinkan Pengaturan Overlay Aplikasi and calls requestOverlayPermission',
       (WidgetTester tester) async {
         when(
           () => mockPermissionService.isOverlayPermissionGranted(),
@@ -176,7 +189,11 @@ void main() {
         await tester.pumpWidget(createWidgetUnderTest());
         await tester.pumpAndSettle();
 
-        expect(find.text('Belum Diizinkan'), findsOneWidget);
+        expect(find.text('Belum Diizinkan'), findsWidgets);
+        expect(
+          find.text('Izinkan Pengaturan Overlay Aplikasi'),
+          findsOneWidget,
+        );
 
         final permBtn = find.byKey(
           const Key('open_permission_settings_button'),
@@ -189,6 +206,46 @@ void main() {
         verify(
           () => mockPermissionService.requestOverlayPermission(),
         ).called(1);
+      },
+    );
+
+    testWidgets('haptic permission card hides button when granted', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Izin Umpan Balik Haptik'), findsOneWidget);
+      expect(
+        find.byKey(const Key('open_haptic_settings_button')),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+      'when haptic is not granted, shows button with label Izinkan Pengaturan Umpan Balik Haptik',
+      (WidgetTester tester) async {
+        const vibrationChannel = MethodChannel('com.timerin.app/vibration');
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(vibrationChannel, (
+              MethodCall call,
+            ) async {
+              if (call.method == 'isHapticFeedbackEnabled') return false;
+              return true;
+            });
+
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
+
+        expect(find.text('Belum Diizinkan'), findsWidgets);
+        expect(
+          find.text('Izinkan Pengaturan Umpan Balik Haptik'),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('open_haptic_settings_button')),
+          findsOneWidget,
+        );
       },
     );
 
@@ -206,19 +263,6 @@ void main() {
 
       expect(find.byType(PrivacyPolicyScreen), findsOneWidget);
       expect(find.text('Komitmen Privasi & Keamanan'), findsOneWidget);
-    });
-
-    testWidgets('renders haptic feedback card and open settings button', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
-
-      expect(find.text('Izin Umpan Balik Haptik'), findsOneWidget);
-      expect(
-        find.byKey(const Key('open_haptic_settings_button')),
-        findsOneWidget,
-      );
     });
 
     testWidgets('settings_logout_button has error (red) background color', (
@@ -249,6 +293,22 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(AboutDeveloperScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'tapping Dukung Pengembang navigates to SupportDeveloperScreen',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
+
+        final supportTile = find.byKey(const Key('support_developer_tile'));
+        await tester.ensureVisible(supportTile);
+        await tester.pumpAndSettle();
+        await tester.tap(supportTile);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SupportDeveloperScreen), findsOneWidget);
       },
     );
 

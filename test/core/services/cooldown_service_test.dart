@@ -14,23 +14,26 @@ void main() {
       expect(service.getRemainingCooldown('test_action'), Duration.zero);
     });
 
-    test('records execution and prevents execution within 5 minutes', () {
+    test('records execution and prevents execution within 1 minute', () {
       final now = DateTime(2026, 10, 29, 12, 0);
       service.recordExecution('refresh_access', now: now);
 
-      // 1 minute later -> cannot execute
-      final oneMinLater = now.add(const Duration(minutes: 1));
-      expect(service.canExecute('refresh_access', now: oneMinLater), isFalse);
+      // 30 seconds later -> cannot execute
+      final thirtySecLater = now.add(const Duration(seconds: 30));
       expect(
-        service.getRemainingCooldown('refresh_access', now: oneMinLater),
-        const Duration(minutes: 4),
+        service.canExecute('refresh_access', now: thirtySecLater),
+        isFalse,
+      );
+      expect(
+        service.getRemainingCooldown('refresh_access', now: thirtySecLater),
+        const Duration(seconds: 30),
       );
 
-      // 5 minutes later -> can execute
-      final fiveMinLater = now.add(const Duration(minutes: 5));
-      expect(service.canExecute('refresh_access', now: fiveMinLater), isTrue);
+      // 1 minute later -> can execute
+      final oneMinLater = now.add(const Duration(minutes: 1));
+      expect(service.canExecute('refresh_access', now: oneMinLater), isTrue);
       expect(
-        service.getRemainingCooldown('refresh_access', now: fiveMinLater),
+        service.getRemainingCooldown('refresh_access', now: oneMinLater),
         Duration.zero,
       );
     });

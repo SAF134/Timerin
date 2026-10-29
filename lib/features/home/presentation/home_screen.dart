@@ -34,28 +34,54 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   bool _hasShownExpiredDialog = false;
+  bool _isOverlayPermissionGranted = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkOverlayPermission();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final initialAccess = ref.read(accessStateProvider);
-      if (initialAccess.isExpired && !_hasShownExpiredDialog) {
-        _hasShownExpiredDialog = true;
-        _showExpiredDialog();
-      }
       await ref.read(accessStateProvider.notifier).refreshAccess();
       if (mounted) {
         final currentAccess = ref.read(accessStateProvider);
-        if (currentAccess.isExpired && !_hasShownExpiredDialog) {
+        if (currentAccess.status == AccessStatus.habis &&
+            !_hasShownExpiredDialog) {
           _hasShownExpiredDialog = true;
           _showExpiredDialog();
         }
       }
       await _checkOptionalUpdate();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkOverlayPermission();
+    }
+  }
+
+  Future<void> _checkOverlayPermission() async {
+    try {
+      final granted = await ref
+          .read(overlayPermissionServiceProvider)
+          .isOverlayPermissionGranted();
+      if (mounted) {
+        setState(() {
+          _isOverlayPermissionGranted = granted;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _checkOptionalUpdate() async {
@@ -184,6 +210,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (!hasPermission) {
       if (mounted) {
         await OverlayPermissionDialog.show(context);
+        await _checkOverlayPermission();
       }
       return;
     }
@@ -408,7 +435,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         key: const Key('stop_overlay_button'),
                         onPressed: _handleStopOverlay,
                         icon: const Icon(Icons.stop_rounded),
-                        label: const Text('Matikan Overlay'),
+                        label: const Text('Matikan Overlay Timer'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.error,
                           side: const BorderSide(color: AppColors.error),
@@ -431,11 +458,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           elevation: 2.0,
                         ),
                       )
+                    : !_isOverlayPermissionGranted
+                    ? ElevatedButton.icon(
+                        key: const Key('start_overlay_button'),
+                        onPressed: () async {
+                          await OverlayPermissionDialog.show(context);
+                          await _checkOverlayPermission();
+                        },
+                        icon: const Icon(Icons.security_rounded),
+                        label: const Text('Izinkan Overlay Aplikasi'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.warning,
+                          foregroundColor: AppColors.textOnPrimary,
+                          minimumSize: const Size.fromHeight(48.0),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: AppRadius.buttonRadius,
+                          ),
+                          elevation: 2.0,
+                        ),
+                      )
                     : ElevatedButton.icon(
                         key: const Key('start_overlay_button'),
                         onPressed: () => _handleStartOverlay(accessState),
                         icon: const Icon(Icons.play_arrow_rounded),
-                        label: const Text('Aktifkan Overlay'),
+                        label: const Text('Aktifkan Overlay Timer'),
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size.fromHeight(48.0),
                         ),

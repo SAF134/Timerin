@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -249,8 +250,16 @@ void main() {
     });
 
     testWidgets(
-      'toggling vibration switch updates isVibrationEnabled in repository',
+      'toggling vibration switch updates isVibrationEnabled in repository when haptic is enabled',
       (WidgetTester tester) async {
+        const vibrationChannel = MethodChannel('com.timerin.app/vibration');
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(vibrationChannel, (
+              MethodCall call,
+            ) async {
+              return true;
+            });
+
         await tester.pumpWidget(createWidgetUnderTest());
         await tester.pumpAndSettle();
 
@@ -265,6 +274,53 @@ void main() {
         await tester.pumpAndSettle();
 
         final repo = TimerSettingsRepository(prefs: prefs);
+        expect(repo.getSettings().isVibrationEnabled, isFalse);
+
+        // Toggle back on
+        await tester.tap(switchFinder);
+        await tester.pumpAndSettle();
+        expect(repo.getSettings().isVibrationEnabled, isTrue);
+      },
+    );
+
+    testWidgets(
+      'when system haptic feedback is disabled, vibration switch is automatically off and tapping shows dialog',
+      (WidgetTester tester) async {
+        const vibrationChannel = MethodChannel('com.timerin.app/vibration');
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(vibrationChannel, (
+              MethodCall call,
+            ) async {
+              if (call.method == 'isHapticFeedbackEnabled') return false;
+              return true;
+            });
+
+        // Initialize repo with vibration enabled
+        final repo = TimerSettingsRepository(prefs: prefs);
+        await repo.saveSettings(const TimerSettings(isVibrationEnabled: true));
+
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
+
+        final switchFinder = find.byKey(const Key('vibration_switch'));
+        final switchWidget = tester.widget<Switch>(switchFinder);
+        // Automatically off
+        expect(switchWidget.value, isFalse);
+        expect(repo.getSettings().isVibrationEnabled, isFalse);
+
+        // Tapping to turn on shows warning dialog
+        await tester.ensureVisible(switchFinder);
+        await tester.pumpAndSettle();
+        await tester.tap(switchFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Umpan Balik Haptik Belum Aktif'), findsOneWidget);
+        expect(find.text('Buka Setelan'), findsOneWidget);
+
+        // Close dialog
+        await tester.tap(find.text('Batal'));
+        await tester.pumpAndSettle();
+
         expect(repo.getSettings().isVibrationEnabled, isFalse);
       },
     );

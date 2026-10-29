@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:timerin/core/services/qris_share_service.dart';
 import 'package:timerin/core/services/url_launcher_service.dart';
 import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_radius.dart';
 import 'package:timerin/core/theme/app_spacing.dart';
 import 'package:timerin/core/theme/app_typography.dart';
+import 'package:timerin/features/settings/presentation/support_developer_screen.dart';
 
-/// Halaman Informasi Tentang Pengembang, Kontak, & Dukungan QRIS.
+/// Halaman Informasi Tentang Pengembang, Kontak, & Tautan Dukungan.
 class AboutDeveloperScreen extends ConsumerWidget {
   const AboutDeveloperScreen({super.key});
 
@@ -187,7 +187,7 @@ class AboutDeveloperScreen extends ConsumerWidget {
               ),
               AppSpacing.gapH16,
 
-              // 4. Dukungan untuk Pengembang (QRIS)
+              // 4. Dukungan untuk Pengembang (Navigasi ke SupportDeveloperScreen)
               Container(
                 padding: AppSpacing.p24,
                 decoration: BoxDecoration(
@@ -203,15 +203,14 @@ class AboutDeveloperScreen extends ConsumerWidget {
                   ],
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         const Icon(
                           Icons.volunteer_activism_rounded,
                           color: AppColors.primary,
-                          size: 22.0,
+                          size: 20.0,
                         ),
                         AppSpacing.gapW8,
                         Text(
@@ -222,131 +221,37 @@ class AboutDeveloperScreen extends ConsumerWidget {
                     ),
                     AppSpacing.gapH8,
                     Text(
-                      'Jika aplikasi ini bermanfaat bagi gameplay kamu, dukungan tip/donasi sukarela sangat membantu biaya server Firebase dan pembaruan fitur:',
-                      textAlign: TextAlign.justify,
-                      style: AppTypography.caption12.copyWith(
+                      'Jika aplikasi ini bermanfaat bagi gameplay kamu, dukungan tip/donasi sukarela melalui QRIS sangat membantu biaya server Firebase dan pemeliharaan fitur berkelanjutan.',
+                      style: AppTypography.body14.copyWith(
                         color: AppColors.textMuted,
                         height: 1.4,
                       ),
+                      textAlign: TextAlign.justify,
                     ),
                     AppSpacing.gapH16,
-                    Container(
-                      width: 280.0,
-                      height: 280.0,
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: AppRadius.cardRadius,
-                        border: Border.all(
-                          color: AppColors.primary,
-                          width: 1.5,
-                        ),
-                        boxShadow: <BoxShadow>[
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.12),
-                            blurRadius: 14.0,
-                            offset: const Offset(0, 4),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        key: const Key('open_support_developer_button'),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const SupportDeveloperScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.qr_code_2_rounded, size: 18.0),
+                        label: const Text('Buka Barcode QRIS Dukungan'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textOnPrimary,
+                          minimumSize: const Size.fromHeight(44.0),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: AppRadius.buttonRadius,
                           ),
-                        ],
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.asset(
-                        'assets/images/qris.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: AppColors.surfaceVariant,
-                          child: const Icon(
-                            Icons.qr_code_2_rounded,
-                            size: 80.0,
-                            color: AppColors.primary,
-                          ),
+                          elevation: 2.0,
                         ),
                       ),
-                    ),
-                    AppSpacing.gapH12,
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        OutlinedButton.icon(
-                          key: const Key('save_qris_developer_button'),
-                          onPressed: () async {
-                            final shareService = ref.read(
-                              qrisShareServiceProvider,
-                            );
-                            final success = await shareService
-                                .saveQrisToGallery();
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context)
-                              ..hideCurrentSnackBar()
-                              ..showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    success
-                                        ? 'Barcode QRIS berhasil disimpan ke galeri perangkat!'
-                                        : 'Tidak dapat menyimpan gambar ke galeri.',
-                                  ),
-                                ),
-                              );
-                          },
-                          icon: const Icon(Icons.download_rounded, size: 14.0),
-                          label: const Text(
-                            'Simpan QRIS',
-                            style: TextStyle(fontSize: 12.0),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.primary,
-                            side: const BorderSide(color: AppColors.primary),
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: AppRadius.buttonRadius,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                              vertical: 6.0,
-                            ),
-                            minimumSize: const Size(0, 32.0),
-                          ),
-                        ),
-                        AppSpacing.gapW8,
-                        ElevatedButton.icon(
-                          key: const Key('share_qris_developer_button'),
-                          onPressed: () async {
-                            final shareService = ref.read(
-                              qrisShareServiceProvider,
-                            );
-                            final success = await shareService.shareQris();
-                            if (!context.mounted) return;
-                            if (!success) {
-                              ScaffoldMessenger.of(context)
-                                ..hideCurrentSnackBar()
-                                ..showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Tidak dapat membuka lembar berbagi sistem.',
-                                    ),
-                                  ),
-                                );
-                            }
-                          },
-                          icon: const Icon(Icons.share_rounded, size: 14.0),
-                          label: const Text(
-                            'Bagikan QRIS',
-                            style: TextStyle(fontSize: 12.0),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.textOnPrimary,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: AppRadius.buttonRadius,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                              vertical: 6.0,
-                            ),
-                            minimumSize: const Size(0, 32.0),
-                            elevation: 1.0,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),

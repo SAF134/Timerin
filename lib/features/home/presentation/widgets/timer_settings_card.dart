@@ -10,15 +10,123 @@ import 'package:timerin/features/overlay/presentation/overlay_container.dart';
 import 'package:timerin/features/overlay/services/vibration_service.dart';
 
 /// Kartu pengaturan konfigurasi timer overlay beserta pratinjau langsung (SCR-004, FR-005..FR-009, FR-018).
-class TimerSettingsCard extends ConsumerWidget {
+class TimerSettingsCard extends ConsumerStatefulWidget {
   const TimerSettingsCard({super.key, this.isLocked = false});
 
   /// Status apakah pengaturan dikunci karena overlay sedang aktif.
   final bool isLocked;
 
+  @override
+  ConsumerState<TimerSettingsCard> createState() => _TimerSettingsCardState();
+}
+
+class _TimerSettingsCardState extends ConsumerState<TimerSettingsCard>
+    with WidgetsBindingObserver {
+  bool _isHapticEnabled = true;
+
+  bool get isLocked => widget.isLocked;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkHaptic();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkHaptic();
+    }
+  }
+
+  Future<void> _checkHaptic() async {
+    bool isHaptic = true;
+    try {
+      isHaptic = await VibrationService.isHapticFeedbackEnabled();
+    } catch (_) {}
+    if (mounted) {
+      setState(() {
+        _isHapticEnabled = isHaptic;
+      });
+      // Jika izin haptik tidak aktif di sistem, matikan otomatis switch getaran
+      if (!isHaptic && ref.read(timerSettingsProvider).isVibrationEnabled) {
+        await ref
+            .read(timerSettingsProvider.notifier)
+            .setVibrationEnabled(false);
+      }
+    }
+  }
+
+  Future<void> _showHapticDialog(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: const RoundedRectangleBorder(
+            borderRadius: AppRadius.cardRadius,
+          ),
+          title: const Text(
+            'Umpan Balik Haptik Belum Aktif',
+            style: AppTypography.title20,
+          ),
+          content: const Text(
+            'Fitur getaran memerlukan pengaturan umpan balik haptik aktif pada perangkat Anda agar getaran dapat berfungsi saat timer habis. Silakan aktifkan di Pengaturan Suara & Getaran sistem.',
+            style: AppTypography.body14,
+            textAlign: TextAlign.justify,
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 20.0),
+          actions: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44.0),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadius.buttonRadius,
+                      ),
+                    ),
+                    child: const Text('Batal'),
+                  ),
+                ),
+                AppSpacing.gapW12,
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      VibrationService.openHapticSettings();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.textOnPrimary,
+                      minimumSize: const Size.fromHeight(44.0),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadius.buttonRadius,
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text('Buka Setelan'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showCustomDurationDialog(
     BuildContext context,
-    WidgetRef ref,
     int timerIndex,
     int currentDuration,
   ) {
@@ -120,7 +228,7 @@ class TimerSettingsCard extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final settings = ref.watch(timerSettingsProvider);
     final notifier = ref.read(timerSettingsProvider.notifier);
 
@@ -279,7 +387,6 @@ class TimerSettingsCard extends ConsumerWidget {
                                 key: Key('timer_duration_dropdown_$index'),
                                 onTap: () => _showCustomDurationDialog(
                                   context,
-                                  ref,
                                   index,
                                   duration,
                                 ),
@@ -503,88 +610,19 @@ class TimerSettingsCard extends ConsumerWidget {
                       AppSpacing.gapW16,
                       Switch.adaptive(
                         key: const Key('vibration_switch'),
-                        value: settings.isVibrationEnabled,
+                        value: _isHapticEnabled && settings.isVibrationEnabled,
                         activeTrackColor: AppColors.primary,
                         onChanged: (val) async {
                           if (val) {
-                            final isHapticEnabled =
+                            final isHaptic =
                                 await VibrationService.isHapticFeedbackEnabled();
-                            if (!isHapticEnabled && context.mounted) {
-                              await showDialog<void>(
-                                context: context,
-                                builder: (dialogContext) {
-                                  return AlertDialog(
-                                    backgroundColor: AppColors.surface,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: AppRadius.cardRadius,
-                                    ),
-                                    title: const Text(
-                                      'Umpan Balik Haptik Belum Aktif',
-                                      style: AppTypography.title20,
-                                    ),
-                                    content: const Text(
-                                      'Fitur getaran memerlukan pengaturan umpan balik haptik aktif pada perangkat Anda agar getaran dapat berfungsi saat timer habis. Silakan aktifkan di Pengaturan Suara & Getaran sistem.',
-                                      style: AppTypography.body14,
-                                      textAlign: TextAlign.justify,
-                                    ),
-                                    actionsPadding: const EdgeInsets.fromLTRB(
-                                      20.0,
-                                      0.0,
-                                      20.0,
-                                      20.0,
-                                    ),
-                                    actions: <Widget>[
-                                      Row(
-                                        children: <Widget>[
-                                          Expanded(
-                                            child: OutlinedButton(
-                                              onPressed: () => Navigator.of(
-                                                dialogContext,
-                                              ).pop(),
-                                              style: OutlinedButton.styleFrom(
-                                                minimumSize:
-                                                    const Size.fromHeight(44.0),
-                                                shape:
-                                                    const RoundedRectangleBorder(
-                                                      borderRadius: AppRadius
-                                                          .buttonRadius,
-                                                    ),
-                                              ),
-                                              child: const Text('Batal'),
-                                            ),
-                                          ),
-                                          AppSpacing.gapW12,
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                Navigator.of(
-                                                  dialogContext,
-                                                ).pop();
-                                                VibrationService.openHapticSettings();
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    AppColors.primary,
-                                                foregroundColor:
-                                                    AppColors.textOnPrimary,
-                                                minimumSize:
-                                                    const Size.fromHeight(44.0),
-                                                shape:
-                                                    const RoundedRectangleBorder(
-                                                      borderRadius: AppRadius
-                                                          .buttonRadius,
-                                                    ),
-                                                elevation: 0,
-                                              ),
-                                              child: const Text('Buka Setelan'),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
+                            if (!isHaptic) {
+                              if (context.mounted) {
+                                setState(() {
+                                  _isHapticEnabled = false;
+                                });
+                                await _showHapticDialog(context);
+                              }
                               return;
                             }
                           }

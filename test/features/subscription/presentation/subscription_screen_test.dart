@@ -277,7 +277,7 @@ void main() {
     });
 
     testWidgets(
-      'tapping Segarkan Status repeatedly shows 5-minute cooldown message',
+      'tapping Segarkan Status repeatedly shows 1-minute cooldown message',
       (WidgetTester tester) async {
         final notifier = FakeAccessNotifier(
           const AccessState(

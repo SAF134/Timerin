@@ -17,6 +17,7 @@ import 'package:timerin/features/overlay/services/overlay_permission_service.dar
 import 'package:timerin/features/overlay/services/vibration_service.dart';
 import 'package:timerin/features/settings/presentation/about_developer_screen.dart';
 import 'package:timerin/features/settings/presentation/privacy_policy_screen.dart';
+import 'package:timerin/features/settings/presentation/support_developer_screen.dart';
 import 'package:timerin/features/subscription/domain/access_state.dart';
 import 'package:timerin/features/subscription/presentation/subscription_screen.dart';
 import 'package:timerin/features/subscription/services/access_service.dart';
@@ -489,15 +490,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   ),
                 );
               },
-              icon: const Icon(Icons.card_membership_rounded, size: 18.0),
-              label: const Text('Perpanjang Langganan'),
+              icon: const Icon(Icons.card_membership_rounded, size: 16.0),
+              label: const Text(
+                'Perpanjang Langganan',
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.textOnPrimary,
+                minimumSize: const Size.fromHeight(36.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 8.0,
+                ),
                 shape: const RoundedRectangleBorder(
                   borderRadius: AppRadius.buttonRadius,
                 ),
-                elevation: 2.0,
+                elevation: 1.0,
               ),
             ),
           ),
@@ -564,28 +573,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             style: AppTypography.body14Muted,
             textAlign: TextAlign.justify,
           ),
-          AppSpacing.gapH16,
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              key: const Key('open_permission_settings_button'),
-              onPressed: () async {
-                final service = ref.read(overlayPermissionServiceProvider);
-                await service.requestOverlayPermission();
-                await _checkPermission();
-              },
-              icon: const Icon(Icons.tune_rounded, size: 18.0),
-              label: const Text('Buka Setelan Izin Sistem'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textOnPrimary,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: AppRadius.buttonRadius,
+          if (!_isPermissionGranted) ...<Widget>[
+            AppSpacing.gapH16,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                key: const Key('open_permission_settings_button'),
+                onPressed: () async {
+                  final service = ref.read(overlayPermissionServiceProvider);
+                  await service.requestOverlayPermission();
+                  await _checkPermission();
+                },
+                icon: const Icon(Icons.tune_rounded, size: 16.0),
+                label: const Text(
+                  'Izinkan Pengaturan Overlay Aplikasi',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
                 ),
-                elevation: 2.0,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textOnPrimary,
+                  minimumSize: const Size.fromHeight(36.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 8.0,
+                  ),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadius.buttonRadius,
+                  ),
+                  elevation: 1.0,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -655,27 +674,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             style: AppTypography.body14Muted,
             textAlign: TextAlign.justify,
           ),
-          AppSpacing.gapH16,
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              key: const Key('open_haptic_settings_button'),
-              onPressed: () async {
-                await VibrationService.openHapticSettings();
-                await _checkPermission();
-              },
-              icon: const Icon(Icons.vibration_rounded, size: 18.0),
-              label: const Text('Buka Setelan Suara & Getaran'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textOnPrimary,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: AppRadius.buttonRadius,
+          if (!_isHapticGranted) ...<Widget>[
+            AppSpacing.gapH16,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                key: const Key('open_haptic_settings_button'),
+                onPressed: () async {
+                  await VibrationService.openHapticSettings();
+                  await _checkPermission();
+                },
+                icon: const Icon(Icons.vibration_rounded, size: 16.0),
+                label: const Text(
+                  'Izinkan Pengaturan Umpan Balik Haptik',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
                 ),
-                elevation: 2.0,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textOnPrimary,
+                  minimumSize: const Size.fromHeight(36.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 8.0,
+                  ),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadius.buttonRadius,
+                  ),
+                  elevation: 1.0,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -714,6 +743,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 Text('Tentang Pengembang', style: AppTypography.body14),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14.0,
+                  color: AppColors.textMuted,
+                ),
+              ],
+            ),
+          ),
+          AppSpacing.gapH12,
+          const Divider(color: AppColors.border, height: 1.0),
+          AppSpacing.gapH12,
+          InkWell(
+            key: const Key('support_developer_tile'),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const SupportDeveloperScreen(),
+                ),
+              );
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text('Dukung Pengembang', style: AppTypography.body14),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14.0,

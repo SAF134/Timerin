@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timerin/core/services/app_update_service.dart';
+import 'package:timerin/core/theme/app_colors.dart';
 import 'package:timerin/core/theme/app_theme.dart';
 import 'package:timerin/data/models/timer_settings_model.dart';
 import 'package:timerin/data/models/user_model.dart';
@@ -199,16 +200,25 @@ void main() {
       );
 
       testWidgets(
-        'tapping Aktifkan Overlay when permission not granted opens OverlayPermissionDialog',
+        'button shows Izinkan Overlay Aplikasi with warning color when permission not granted and opens OverlayPermissionDialog',
         (WidgetTester tester) async {
           when(
             () => mockPermissionService.isOverlayPermissionGranted(),
           ).thenAnswer((_) async => false);
 
           await tester.pumpWidget(createWidgetUnderTest());
-          await tester.pump();
+          await tester.pumpAndSettle();
 
           final startBtn = find.byKey(const Key('start_overlay_button'));
+          expect(startBtn, findsOneWidget);
+          expect(find.text('Izinkan Overlay Aplikasi'), findsOneWidget);
+
+          final btnWidget = tester.widget<ElevatedButton>(startBtn);
+          expect(
+            btnWidget.style?.backgroundColor?.resolve(<WidgetState>{}),
+            AppColors.warning,
+          );
+
           await tester.ensureVisible(startBtn);
           await tester.pumpAndSettle();
           await tester.tap(startBtn);
@@ -217,12 +227,30 @@ void main() {
           expect(find.byType(OverlayPermissionDialog), findsOneWidget);
           verify(
             () => mockPermissionService.isOverlayPermissionGranted(),
-          ).called(1);
+          ).called(greaterThanOrEqualTo(1));
           verifyNever(
             () => mockOverlayController.startOverlay(
               settings: any(named: 'settings'),
             ),
           );
+        },
+      );
+
+      testWidgets(
+        'when status is trial or berlangganan, does NOT show expired dialog on entry',
+        (WidgetTester tester) async {
+          await tester.pumpWidget(
+            createWidgetUnderTest(
+              accessState: const AccessState(
+                status: AccessStatus.trial,
+                remainingAccess: Duration(hours: 12),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(find.text('Masa Aktif Habis'), findsNothing);
+          expect(find.text('Aktifkan Overlay Timer'), findsOneWidget);
         },
       );
 
@@ -362,6 +390,7 @@ void main() {
           await tester.pump();
 
           final startBtn = find.byKey(const Key('start_overlay_button'));
+          expect(find.text('Aktifkan Overlay Timer'), findsOneWidget);
           await tester.ensureVisible(startBtn);
           await tester.pumpAndSettle();
           await tester.tap(startBtn);
@@ -373,6 +402,7 @@ void main() {
             ),
           ).called(1);
           expect(find.byKey(const Key('stop_overlay_button')), findsOneWidget);
+          expect(find.text('Matikan Overlay Timer'), findsOneWidget);
           expect(
             find.text(
               'Overlay aktif. Ketuk 1x untuk mulai timer, ketuk 2x untuk reset.',

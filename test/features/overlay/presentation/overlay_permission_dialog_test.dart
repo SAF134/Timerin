@@ -43,12 +43,12 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Buka Setelan Izin Sistem'), findsOneWidget);
+      expect(find.text('Izinkan Pengaturan Overlay Aplikasi'), findsOneWidget);
       expect(find.text('Nanti Saja'), findsOneWidget);
     });
 
     testWidgets(
-      'tapping Buka Setelan Izin Sistem calls requestOverlayPermission',
+      'tapping Izinkan Pengaturan Overlay Aplikasi calls requestOverlayPermission',
       (WidgetTester tester) async {
         when(
           () => mockPermissionService.requestOverlayPermission(),
@@ -56,7 +56,7 @@ void main() {
 
         await tester.pumpWidget(createWidgetUnderTest());
 
-        await tester.tap(find.text('Buka Setelan Izin Sistem'));
+        await tester.tap(find.text('Izinkan Pengaturan Overlay Aplikasi'));
         await tester.pumpAndSettle();
 
         verify(

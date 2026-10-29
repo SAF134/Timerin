@@ -7,7 +7,7 @@ import 'package:timerin/features/settings/presentation/about_developer_screen.da
 void main() {
   group('AboutDeveloperScreen Tests', () {
     testWidgets(
-      'renders developer image, bio, contact, and QRIS, without security card',
+      'renders developer image, bio, contact, and support navigation button',
       (WidgetTester tester) async {
         await tester.pumpWidget(
           ProviderScope(
@@ -29,11 +29,7 @@ void main() {
         expect(find.text('timerindev@gmail.com'), findsOneWidget);
         expect(find.text('Dukung Pengembang'), findsOneWidget);
         expect(
-          find.byKey(const Key('save_qris_developer_button')),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(const Key('share_qris_developer_button')),
+          find.byKey(const Key('open_support_developer_button')),
           findsOneWidget,
         );
         expect(find.byType(Image), findsWidgets);
