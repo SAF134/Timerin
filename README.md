@@ -4,7 +4,16 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0+-3DDC84?logo=android&logoColor=white)](https://android.com)
 [![Version](https://img.shields.io/badge/Version-1.0.1-111625)](https://github.com)
+[![Website](https://img.shields.io/badge/Website-timerin.vercel.app-00D1B2?logo=vercel&logoColor=white)](https://timerin.vercel.app/)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-00D1B2)](#)
+
+---
+
+## 🌐 Website Resmi & Unduh APK
+
+Unduh versi APK rilis resmi terbaru, pelajari panduan fitur, serta dapatkan informasi pembaruan aplikasi Timerin melalui website resmi:
+
+👉 **[https://timerin.vercel.app/](https://timerin.vercel.app/)**
 
 ---
 
@@ -108,6 +117,7 @@ Timerin dirancang dengan mengutamakan kepatuhan terhadap kebijakan pengembang ga
 Aplikasi Timerin dirancang dan dikembangkan secara mandiri oleh **SAF**.
 
 Jika Anda memiliki pertanyaan, kendala aktivasi langganan, saran pembaruan fitur, atau pertanyaan seputar privasi data, silakan hubungi pengembang melalui:
+* **Website Resmi:** [https://timerin.vercel.app/](https://timerin.vercel.app/)
 * **Email Resmi:** [timerindev@gmail.com](mailto:timerindev@gmail.com)
 * **Subjek Email Konfirmasi Pembayaran:** `Konfirmasi Pembayaran Timerin`
 
