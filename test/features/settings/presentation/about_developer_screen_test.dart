@@ -21,7 +21,7 @@ void main() {
 
         expect(find.text('Tentang Pengembang'), findsOneWidget);
         expect(
-          find.text('Halo! Saya pengembang aplikasi Timerin.'),
+          find.text('Halo! Saya SAF, Pengembang Aplikasi Timerin.'),
           findsOneWidget,
         );
         expect(find.text('Kontak Pengembang'), findsOneWidget);

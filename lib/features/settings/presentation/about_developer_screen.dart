@@ -100,12 +100,12 @@ class AboutDeveloperScreen extends ConsumerWidget {
                     ),
                     AppSpacing.gapH12,
                     const Text(
-                      'Halo! Saya pengembang aplikasi Timerin.',
+                      'Halo! Saya SAF, Pengembang Aplikasi Timerin.',
                       style: AppTypography.title20,
                     ),
                     AppSpacing.gapH8,
                     Text(
-                      'Timerin dirancang dan dikembangkan secara mandiri untuk memberikan utilitas stopwatch/countdown cooldown battle spell yang adil, bersih, dan praktis bagi komunitas pemain Mobile Legends: Bang Bang di Indonesia.',
+                      'Aplikasi Timerin dibuat oleh saya sendiri dengan tujuan untuk mempermudah pemain game moba seperti Mobile Legends, Honor Of King, atau game moba lainnya.',
                       style: AppTypography.body14.copyWith(
                         color: AppColors.text,
                         height: 1.5,

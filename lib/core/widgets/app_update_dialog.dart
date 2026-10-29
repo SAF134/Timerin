@@ -29,6 +29,16 @@ class AppUpdateDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isForce = info.isForceUpdate;
     final versionName = info.latestVersionName ?? 'Terbaru';
+    final releaseNotesText =
+        (info.releaseNotes != null && info.releaseNotes!.trim().isNotEmpty)
+        ? info.releaseNotes!
+        : (versionName == '1.0.1'
+              ? '• Fitur penyesuaian transparansi warna latar belakang overlay timer.\n'
+                    '• Indikator cerdas dan tombol dinamis status izin overlay di Beranda & Pengaturan.\n'
+                    '• Sinkronisasi otomatis sakelar getaran dengan pengaturan haptik sistem perangkat.\n'
+                    '• Cooldown penyegaran status & periksa pembaruan disesuaikan menjadi 60 detik.\n'
+                    '• Halaman baru Dukung Pengembang khusus untuk donasi barcode QRIS sukarela.'
+              : null);
 
     return AlertDialog(
       backgroundColor: AppColors.surface,
@@ -116,9 +126,8 @@ class AppUpdateDialog extends ConsumerWidget {
             style: AppTypography.body14Muted,
           ),
 
-          // 4. Catatan Rilis (Release Notes) jika ada
-          if (info.releaseNotes != null &&
-              info.releaseNotes!.trim().isNotEmpty) ...<Widget>[
+          // 4. Catatan Rilis (Release Notes)
+          if (releaseNotesText != null) ...<Widget>[
             AppSpacing.gapH16,
             Container(
               padding: AppSpacing.p12,
@@ -139,7 +148,7 @@ class AppUpdateDialog extends ConsumerWidget {
                       ),
                       AppSpacing.gapW4,
                       Text(
-                        'Catatan Rilis:',
+                        'Catatan Rilis v$versionName:',
                         style: AppTypography.caption12.copyWith(
                           fontWeight: FontWeight.w700,
                           color: AppColors.text,
@@ -149,7 +158,7 @@ class AppUpdateDialog extends ConsumerWidget {
                   ),
                   AppSpacing.gapH8,
                   Text(
-                    info.releaseNotes!,
+                    releaseNotesText,
                     textAlign: TextAlign.justify,
                     style: AppTypography.caption12.copyWith(
                       color: AppColors.textMuted,

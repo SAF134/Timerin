@@ -52,7 +52,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            'Kepatuhan UU PDP No. 27/2022',
+                            'Kebijakan Privasi Aplikasi Timerin',
                             style: AppTypography.caption12.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w700,
@@ -144,7 +144,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 title: '6. Kontak Pengembang Resmi',
                 content:
                     'Jika Anda memiliki pertanyaan seputar kebijakan privasi, permohonan hak data, atau kendala aktivasi langganan, silakan hubungi pengembang melalui:\n\n'
-                    'Email: timerindev@gmail.com\n'
+                    'Email: timerindev@gmail.com\n\n'
                     'Pembaruan Terakhir: 10 Oktober 2026',
               ),
               AppSpacing.gapH24,

@@ -16,7 +16,7 @@ void main() {
       expect(find.text('Kebijakan Privasi'), findsOneWidget);
       expect(find.text('Komitmen Privasi & Keamanan'), findsOneWidget);
       expect(
-        find.textContaining('Kepatuhan UU PDP No. 27/2022'),
+        find.textContaining('Kebijakan Privasi Aplikasi Timerin'),
         findsOneWidget,
       );
       expect(
